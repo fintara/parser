@@ -1,0 +1,36 @@
+.gradle
+/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+out
+test-output
+atlassian-ide-plugin.xml
+.gradletasknamecache
+
+.resourceCache/
+static/
+classes/
+src/main/resources/application.yaml
+src/main/kotlin/com/financifyapp/api/sandbox.kt
