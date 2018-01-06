@@ -1,3 +1,5 @@
+package com.tsovedenski.parser
+
 /**
  * Created by Tsvetan Ovedenski on 06/01/2018.
  */
@@ -15,26 +17,28 @@ fun satisfy(predicate: (Char) -> Boolean): Parser<Char> = { input ->
         is Error -> result
         is Success -> when (predicate(result.value)) {
             true -> result
-            else -> Error("Could not satisfy")
+            else -> Error("satisfy")
         }
     }
 }
 
 fun char(wanted: Char) = satisfy { it == wanted } % "'$wanted'"
 
-val any       = satisfy { true }
-val space     = satisfy(Char::isWhitespace)    % "space"
-val upper     = satisfy(Char::isUpperCase)     % "upper"
-val lower     = satisfy(Char::isLowerCase)     % "lower"
-val alphaNum  = satisfy(Char::isLetterOrDigit) % "alphanum"
-val digit     = satisfy(Char::isDigit)         % "digit"
-val letter    = satisfy(Char::isLetter)        % "letter"
+val any       = takeFirst
+val space     = satisfy(Char::isWhitespace) % "space"
+val upper     = satisfy(Char::isUpperCase) % "upper"
+val lower     = satisfy(Char::isLowerCase) % "lower"
+val alphaNum  = satisfy(Char::isLetterOrDigit) % "alpha-numeric"
+val letter    = satisfy(Char::isLetter) % "letter"
 
-fun oneOf(vararg possible: Char) = satisfy { it in possible }   % "one of $possible"
+val digit     = satisfy(Char::isDigit) % "digit"
+val integer: Parser<Int> = digit.map { it.toString().toInt() } % "integer"
+
+fun oneOf(vararg possible: Char) = satisfy { it in possible } % "one of $possible"
 fun noneOf(vararg possible: Char) = satisfy { it !in possible } % "none of $possible"
 
 fun string(wanted: String): Parser<String> = { input ->
-    val parser = fmap(count(wanted.length, any)) { it.joinToString("") }
+    val parser = count(wanted.length, any).map { it.joinToString("") }
     val result = parser(input)
 
     when (result) {
@@ -45,8 +49,6 @@ fun string(wanted: String): Parser<String> = { input ->
         }
     }
 }
-
-val int: Parser<Int> = fmap(digit) { it.toString().toInt() }
 
 fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> = fn@{ input ->
     val accum = mutableListOf<T>()
