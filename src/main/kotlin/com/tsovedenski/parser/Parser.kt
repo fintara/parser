@@ -10,11 +10,11 @@ typealias Parser <T> = (String) -> Result<T>
 
 fun <T> parse(parser: Parser<T>, input: String): Result<T> = parser(input)
 
-operator fun <T> Parser<T>.rem(name: String): Parser<T> = { input ->
+operator fun <T> Parser<T>.rem(message: String): Parser<T> = { input ->
     val result = this(input)
 
     when (result) {
-        is Error<T> -> Error("com.tsovedenski.parser.Error: $name")
+        is Error<T> -> Error(message)
         is Success<T> -> result
     }
 }
