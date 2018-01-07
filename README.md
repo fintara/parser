@@ -12,6 +12,9 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `letter` - any letter
 * `digit` - any digit 0..9
 * `alphaNum` - any letter or digit
+* `integer` - an integer
+* `float` - a floating-point number (decimal or e-notation)
+* `number` - a floating-point or integer number
 
 ### Configurable parsers
 * `oneOf(list)` - any character in the provided list
@@ -24,7 +27,9 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `count(number, parser)` - repeats `parser` as many times as stated
 * `many(parser)` - repeats `parser` until error occurs
 * `many1(parser)` - repeats `parser` until error occurs, should succeed at least once
-* `parserA and parserB` - returns both results of parserA and parserB
+* `just(value)` - always returns `value`
+* `option(value, parser)` - returns `value` if `parser` fails
+* `parserA and parserB` - returns both results of `parserA` and `parserB`
 * `parserA then parserB` - returns result of `parserB` only if `parserA` succeeds
 * `parserA or parserB` - tries to run `parserA` and if fails, returns result of `parserB`
 * `parser.map { ... }` - apply function to the result of `parser`
@@ -53,10 +58,10 @@ This is how to build a parser for simple arithmetic expressions.
 
 An arithmetic expression is a number that is followed by one or more "tails" (operator followed by a number).
 ```kotlin
-val tail = oneOf('+', '-', '*', '/') and integer
+val tail = oneOf('+', '-', '*', '/') and number
 val tails = many1(tail).map { it.flatten() }
-val expr = integer and tails
+val expr = number and tails
 
-val result = parse(expr, "12+6")
-// should be Success(value=[12, '+', 6], rest=)
+val result = parse(expr, "12+6.5")
+// should be Success(value=[12, '+', 6.5], rest=)
 ```

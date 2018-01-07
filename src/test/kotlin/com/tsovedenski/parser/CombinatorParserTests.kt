@@ -21,6 +21,20 @@ class CombinatorParserTests {
     }
 
     @Test
+    fun `arithmetic expression 2`() {
+        val operator = oneOf(*"+-*/^".toCharArray())
+        val tail = operator and number
+        val tails = many1(tail).map { it.flatten() }
+        val expr = number and tails
+
+        assertSuccess(
+                expr,
+                "-5*20-3.5^2",
+                listOf(-5, '*', 20, '-', 3.5, '^', 2)
+        )
+    }
+
+    @Test
     fun `phone`() {
         val group = count(3, digit).map { it.joinToString("") }
         val dash  = char('-')
@@ -87,5 +101,36 @@ class CombinatorParserTests {
                 "A123",
                 'A'
         )
+    }
+
+    @Test
+    fun `all but vowels`() {
+        val notVowel = noneOf(*"aeiou".toCharArray())
+        assertSuccess(notVowel, "qwerty", 'q')
+        assertError(notVowel, "ayyy")
+    }
+
+    @Test
+    fun `all kinds of spaces`() {
+        val input = "\t  \t"
+        assertSuccess(count(4, space), input, input.toList())
+    }
+
+    @Test
+    fun `negative integer`() {
+        val input = "-42"
+        assertSuccess(integer, input, -42)
+    }
+
+    @Test
+    fun `floating number with point`() {
+        val input = "12.345"
+        assertSuccess(float, input, 12.345)
+    }
+
+    @Test
+    fun `floating number with e-notation`() {
+        val input = "6.5e3"
+        assertSuccess(float, input, 6500.0)
     }
 }
