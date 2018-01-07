@@ -58,7 +58,7 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> = fn@{ input ->
     do {
         val result = parser(rest)
         when (result) {
-            is Error<T> -> return@fn Error(result.message)
+            is Error<T>   -> return@fn Error(result.message)
             is Success<T> -> {
                 accum.add(result.value)
                 rest = result.rest
@@ -70,8 +70,8 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> = fn@{ input ->
 }
 
 fun <T> many(parser: Parser<T>): Parser<List<T>> = fn@{ input ->
-    val accum =  mutableListOf<T>()
-    var rest = input
+    val accum = mutableListOf<T>()
+    var rest  = input
 
     do {
         val result = parser(rest)
