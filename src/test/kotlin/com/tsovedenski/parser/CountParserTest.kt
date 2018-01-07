@@ -8,7 +8,12 @@ import org.junit.Test
 class CountParserTest {
 
     @Test fun testS001() = testSuccess(upper, 5, "ABCDE12345", "ABCDE".toList())
-    @Test fun testS002() = testSuccess(integer, 3, "681QWE", listOf(6, 8, 1))
+    @Test fun testS002() = testSuccess(
+            digit.map { it.toString().toInt() },
+            3,
+            "681QWE",
+            listOf(6, 8, 1)
+    )
 
     @Test fun testE001() = testError(lower, 5, "ABCDE12345")
     @Test fun testE002() = testError(letter, 3, "AB123")

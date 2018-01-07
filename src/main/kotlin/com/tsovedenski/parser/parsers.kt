@@ -32,10 +32,10 @@ val alphaNum  = satisfy(Char::isLetterOrDigit) % "alpha-numeric"
 val letter    = satisfy(Char::isLetter) % "letter"
 
 val digit     = satisfy(Char::isDigit) % "digit"
-val integer: Parser<Int> = digit.map { it.toString().toInt() } % "integer"
+val integer: Parser<Int> = many1(digit).map { it.joinToString("").toInt() } % "integer"
 
-fun oneOf(vararg possible: Char) = satisfy { it in possible } % "one of $possible"
-fun noneOf(vararg possible: Char) = satisfy { it !in possible } % "none of $possible"
+fun oneOf(vararg possible: Char) = satisfy { it in possible } % "one of ${possible.toList()}"
+fun noneOf(vararg possible: Char) = satisfy { it !in possible } % "none of ${possible.toList()}"
 
 fun string(wanted: String): Parser<String> = { input ->
     val parser = count(wanted.length, any).map { it.joinToString("") }
