@@ -3,16 +3,16 @@ package com.tsovedenski.parser
 /**
  * Created by Tsvetan Ovedenski on 07/01/18.
  */
-fun <T> buildParser(block: ParserContext<T>.() -> T): Parser<T> = { input ->
+fun <T> buildParser(block: ParserContext.() -> T): Parser<T> = { input ->
     try {
-        val context = ParserContext<T>(input)
+        val context = ParserContext(input)
         Success(block(context), context.getRest())
     } catch (e: ParserException) {
         Error(e.error.message)
     }
 }
 
-class ParserContext<T>(private val input: String) {
+class ParserContext(input: String) {
 
     private var rest = input
 

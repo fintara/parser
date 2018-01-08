@@ -9,5 +9,5 @@ class StringParserTest {
 
     @Test fun testS001() = assertSuccess(string("//comment"), "//comment and else", "//comment")
 
-    @Test fun testE001() = assertError(string("wanted com.tsovedenski.parser.string"), "another com.tsovedenski.parser.string")
+    @Test fun testE001() = assertError(string("wanted string"), "another string")
 }

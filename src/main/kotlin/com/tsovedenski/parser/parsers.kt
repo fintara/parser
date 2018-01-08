@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package com.tsovedenski.parser
 
 import kotlin.math.pow
@@ -51,14 +53,14 @@ val int: Parser<Int> = buildParser {
     }
 }
 
-private val floatP: Parser<Double> = buildParser<Double> {
+private val floatP: Parser<Double> = buildParser {
     val base = int.ev()
     char('.').ev()
     val frac = int.ev()
     "$base.$frac".toDouble()
 }
 
-private val floatE: Parser<Double> = buildParser<Double> {
+private val floatE: Parser<Double> = buildParser {
     val base = floatP.ev()
     oneOf('e', 'E').ev()
     val exp  = int.ev()
@@ -75,8 +77,8 @@ val float: Parser<Double> = buildParser {
     }
 }
 
-val unumber: Parser<Number> = ufloat or uint
-val number: Parser<Number> = float or int
+val unumber = (ufloat or uint) as Parser<Number> % "positive real number"
+val number = (float or int) as Parser<Number> % "real number"
 
 fun oneOf(vararg possible: Char) = satisfy { it in possible } % "one of ${possible.toList()}"
 fun noneOf(vararg possible: Char) = satisfy { it !in possible } % "none of ${possible.toList()}"
