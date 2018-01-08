@@ -12,7 +12,7 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `letter` - any letter
 * `digit` - any digit 0..9
 * `alphaNum` - any letter or digit
-* `integer` - an integer
+* `int` - an integer
 * `float` - a floating-point number (decimal or e-notation)
 * `number` - a floating-point or integer number
 
@@ -53,7 +53,16 @@ when (result) {
 // should print 'A'
 ```
 
-## Example
+## Parser builder
+In addition to the combinators `and`/`then`/`or`, as well as the modifier `map`, 
+there is a way to build parsers in declarative style.
+
+`buildParser` creates a context which takes care of passing the rest of the input 
+from one parser to the other upon calling `.ev()`, all while taking care of whether `Success` or `Error` was returned.
+In case of the latter, execution is stopped and the error is returned.
+
+## Examples
+### Arithmetic expressions
 This is how to build a parser for simple arithmetic expressions.
 
 An arithmetic expression is a number that is followed by one or more "tails" (operator followed by a number).
@@ -64,4 +73,20 @@ val expr = number and tails
 
 val result = parse(expr, "12+6.5")
 // should be Success(value=[12, '+', 6.5], rest=)
+```
+
+### Parser builder
+An easy way to combine different parsers and their results.
+
+This parser would take two numbers and sum them together.
+```kotlin
+val sum = buildParser {
+    val a = int.ev()
+    char('+').ev()
+    val b = uint.ev()
+    a + b
+}
+
+val result = parse(sum, "3+4")
+// should be Success(value=7, rest=)
 ```

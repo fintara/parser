@@ -41,26 +41,42 @@ val letter    = satisfy(Char::isLetter) % "letter"
 
 val digit     = satisfy(Char::isDigit) % "digit"
 
-val integer: Parser<Int> = (
-        option('x', char('-')) and
-        many1(digit).map { it.joinToString("").toInt() }
-    ).map {
-        val number = it[1] as Int
-        val sign = it[0] as Char
-        when (sign) {
-            '-' -> -number
-            else -> number
-        }
+val uint: Parser<Int> = many1(digit).map { it.joinToString("").toInt() }
+val int: Parser<Int> = buildParser {
+    val sign = option('x', char('-')).ev()
+    val number = uint.ev()
+    when (sign) {
+        '-' -> -number
+        else -> number
+    }
 }
 
-private val floatP: Parser<Double> = (integer and (char('.') then integer)).map { "${it[0]}.${it[1]}".toDouble() }
-private val floatE: Parser<Double> = (floatP and (oneOf('e', 'E') then integer)).map { it ->
-    val base = it[0] as Double
-    val exp  = it[1] as Int
+private val floatP: Parser<Double> = buildParser<Double> {
+    val base = int.ev()
+    char('.').ev()
+    val frac = int.ev()
+    "$base.$frac".toDouble()
+}
+
+private val floatE: Parser<Double> = buildParser<Double> {
+    val base = floatP.ev()
+    oneOf('e', 'E').ev()
+    val exp  = int.ev()
     base * (10.0).pow(exp)
 }
-val float = floatE or floatP
-val number = float or integer
+
+val ufloat: Parser<Double> = (floatE or floatP) % "floating number"
+val float: Parser<Double> = buildParser {
+    val sign = option('x', char('-')).ev()
+    val number = ufloat.ev()
+    when (sign) {
+        '-' -> -number
+        else -> number
+    }
+}
+
+val unumber: Parser<Number> = ufloat or uint
+val number: Parser<Number> = float or int
 
 fun oneOf(vararg possible: Char) = satisfy { it in possible } % "one of ${possible.toList()}"
 fun noneOf(vararg possible: Char) = satisfy { it !in possible } % "none of ${possible.toList()}"

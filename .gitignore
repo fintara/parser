@@ -32,5 +32,4 @@ atlassian-ide-plugin.xml
 .resourceCache/
 static/
 classes/
-src/main/resources/application.yaml
-src/main/kotlin/com/financifyapp/api/sandbox.kt
+main.kt

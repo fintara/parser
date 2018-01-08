@@ -14,7 +14,7 @@ operator fun <T> Parser<T>.rem(message: String): Parser<T> = { input ->
     val result = this(input)
 
     when (result) {
-        is Error<T> -> Error(message)
+        is Error<T>   -> Error(message)
         is Success<T> -> result
     }
 }
@@ -60,11 +60,11 @@ infix fun <T> Parser<T>.or(other: Parser<T>): Parser<T> = { input ->
     }
 }
 
-fun <A, B> Parser<A>.map(op: (A) -> B): Parser<B> = { input ->
+fun <A, B> Parser<A>.map(action: (A) -> B): Parser<B> = { input ->
     val result = this(input)
 
     when (result) {
         is Error<A>   -> Error(result.message)
-        is Success<A> -> Success(op(result.value), result.rest)
+        is Success<A> -> Success(action(result.value), result.rest)
     }
 }

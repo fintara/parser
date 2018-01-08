@@ -1,7 +1,6 @@
 package com.tsovedenski.parser
 
 import org.junit.Test
-import kotlin.math.exp
 
 /**
  * Created by Tsvetan Ovedenski on 07/01/2018.
@@ -10,9 +9,9 @@ class CombinatorParserTests {
 
     @Test
     fun `arithmetic expression`() {
-        val tail = oneOf('+', '-', '*', '/') and integer
+        val tail = oneOf('+', '-', '*', '/') and int
         val tails = many1(tail).map { it.flatten() }
-        val expr = integer and tails
+        val expr = int and tails
 
         assertSuccess(
                 expr,
@@ -88,7 +87,7 @@ class CombinatorParserTests {
     @Test
     fun `or type first`() {
         assertSuccess(
-                integer or upper,
+                int or upper,
                 "123A",
                 123
         )
@@ -97,7 +96,7 @@ class CombinatorParserTests {
     @Test
     fun `or type second`() {
         assertSuccess(
-                integer or upper,
+                int or upper,
                 "A123",
                 'A'
         )
@@ -119,7 +118,7 @@ class CombinatorParserTests {
     @Test
     fun `negative integer`() {
         val input = "-42"
-        assertSuccess(integer, input, -42)
+        assertSuccess(int, input, -42)
     }
 
     @Test
