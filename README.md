@@ -1,6 +1,8 @@
 Parser
 ======
 
+[![Build Status](https://travis-ci.org/fintara/parser.svg?branch=master)](https://travis-ci.org/fintara/parser)
+
 An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 
 ## Parsers
