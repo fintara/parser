@@ -17,23 +17,28 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `int` - an integer
 * `float` - a floating-point number (decimal or e-notation)
 * `number` - a floating-point or integer number
+* `eof` - end of input
+* `skipSpaces` - skip arbitrary number of spaces
 
 ### Configurable parsers
 * `oneOf(list)` - any character in the provided list
 * `noneOf(list)` - character should not be in the provided list
 * `char(ch)` - character equal to the provided one
-* `string(str)` - string equal to the provided one
+* `symbol(str)` - string equal to the provided one
 * `satisfy(pred)` - character for which provided predicate returns true
 
 ### Combinators
 * `count(number, parser)` - repeats `parser` as many times as stated
 * `many(parser)` - repeats `parser` until error occurs
-* `many1(parser)` - repeats `parser` until error occurs, should succeed at least once
+* `many1(parser)` - repeats `parser` at least once until error occurs
+* `skipMany(parser)` - repeats `parser` but does not return any result
+* `skipMany1(parser)` - repeats `parser` at least once but does not return any result
 * `just(value)` - always returns `value`
 * `option(value, parser)` - returns `value` if `parser` fails
-* `parserA and parserB` - returns both results of `parserA` and `parserB`
-* `parserA then parserB` - returns result of `parserB` only if `parserA` succeeds
-* `parserA or parserB` - tries to run `parserA` and if fails, returns result of `parserB`
+* `pA and pB` - returns both results of parsers `pA` and `pB`
+* `pA andL pB` - returns result of `pA` (left parser) only if `pB` succeeds
+* `pA andR pB` - returns result of `pB` (right parser) only if `pA` succeeds
+* `pA or pB` - tries to run `pA` and if fails, returns result of `pB`
 * `parser.map { ... }` - apply function to the result of `parser`
 
 ### Misc

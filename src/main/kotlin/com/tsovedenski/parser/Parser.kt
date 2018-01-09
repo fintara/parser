@@ -35,19 +35,38 @@ infix fun <T> Parser<T>.and(other: Parser<T>): Parser<List<T>> = { input ->
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun <T> flatten(fst: T, snd: T): List<T> = when {
-    fst is List<*> && snd is List<*> -> fst + snd
-    fst is List<*>                   -> fst + listOf(snd)
-    snd is List<*>                   -> listOf(fst) + snd
-    else                             -> listOf(fst, snd)
-} as List<T>
+private fun <T> flatten(fst: T, snd: T): List<T> {
+    val list = when {
+        fst is List<*> && snd is List<*> -> fst + snd
+        fst is List<*>                   -> fst + listOf(snd)
+        snd is List<*>                   -> listOf(fst) + snd
+        else                             -> listOf(fst, snd)
+    } as List<T>
 
-infix fun <T> Parser<T>.then(other: Parser<T>): Parser<T> = { input ->
+    return list.filter { it != Unit }
+}
+
+infix fun <T> Parser<T>.andR(other: Parser<T>): Parser<T> = { input ->
     val result = this(input)
 
     when (result) {
         is Error<T>   -> result
         is Success<T> -> other(result.rest)
+    }
+}
+
+infix fun <T> Parser<T>.andL(other: Parser<T>): Parser<T> = { input ->
+    val first = this(input)
+
+    when (first) {
+        is Error<T>   -> first
+        is Success<T> -> {
+            val second = other(first.rest)
+            when (second) {
+                is Error<T>   -> second
+                is Success<T> -> first
+            }
+        }
     }
 }
 

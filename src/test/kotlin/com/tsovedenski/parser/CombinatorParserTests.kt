@@ -49,22 +49,41 @@ class CombinatorParserTests {
     }
 
     @Test
-    fun `then success`() {
+    fun `andR first fails`() {
+        assertError(
+                digit andR symbol("ABC"),
+                "xABC"
+        )
+    }
+
+    @Test
+    fun `andR success`() {
         val expected = "!@#"
         assertSuccess(
-                digit then string(expected),
+                digit andR symbol(expected),
                 "1!@#",
                 expected
         )
     }
 
     @Test
-    fun `then first fails`() {
-        assertError(
-                digit then string("ABC"),
-                "xABC"
-        )
-    }
+    fun `andL first fails`() = assertError(
+            digit andL upper,
+            "AA"
+    )
+
+    @Test
+    fun `andL second fails`() = assertError(
+            digit andL upper,
+            "55"
+    )
+
+    @Test
+    fun `andL success`() = assertSuccess(
+            digit andL upper,
+            "5A",
+            '5'
+    )
 
     @Test
     fun `or first`() {

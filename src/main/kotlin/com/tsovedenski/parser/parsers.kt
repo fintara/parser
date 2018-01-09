@@ -9,7 +9,7 @@ import kotlin.math.pow
  */
 val takeFirst: Parser<Char> = { input ->
     when (input.isEmpty()) {
-        true -> Error("No more input")
+        true -> Error("end of input")
         else -> Success(input.first(), input.substring(1))
     }
 }
@@ -80,10 +80,20 @@ val float: Parser<Double> = buildParser {
 val unumber = (ufloat or uint) as Parser<Number> % "positive real number"
 val number = (float or int) as Parser<Number> % "real number"
 
-fun oneOf(vararg possible: Char) = satisfy { it in possible } % "one of ${possible.toList()}"
-fun noneOf(vararg possible: Char) = satisfy { it !in possible } % "none of ${possible.toList()}"
+val eof: Parser<Unit> = { input ->
+    val result = any(input)
+    when (result) {
+        is Error   -> Success(Unit, "")
+        is Success -> Error("end of input")
+    }
+}
 
-fun string(wanted: String): Parser<String> = { input ->
+fun oneOf(vararg possible: Char) = oneOf(possible.toList())
+fun oneOf(possible: List<Char>) = satisfy { it in possible } % "one of $possible"
+fun noneOf(vararg possible: Char) = noneOf(possible.toList())
+fun noneOf(possible: List<Char>) = satisfy { it !in possible } % "none of $possible"
+
+fun symbol(wanted: String): Parser<String> = { input ->
     val parser = count(wanted.length, any).map { it.joinToString("") }
     val result = parser(input)
 
@@ -149,3 +159,34 @@ fun <T> many1(parser: Parser<T>): Parser<List<T>> = fn@{ input ->
         else -> Success(accum, rest)
     }
 }
+
+fun <T> skipMany(parser: Parser<T>): Parser<Unit> = fn@{ input ->
+    var rest = input
+    do {
+        val result = parser(rest)
+        if (result is Success) {
+            rest = result.rest
+        }
+    } while (result is Success)
+
+    Success(Unit, rest)
+}
+
+fun <T> skipMany1(parser: Parser<T>): Parser<Unit> = fn@{ input ->
+    var more1 = false
+    var rest = input
+    do {
+        val result = parser(rest)
+        if (result is Success) {
+            more1 = true
+            rest = result.rest
+        }
+    } while (result is Success)
+
+    when (more1) {
+        false -> Error("skip many1")
+        else -> Success(Unit, rest)
+    }
+}
+
+val skipSpaces = skipMany(space)
