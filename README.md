@@ -69,11 +69,11 @@ val result = run(int, input)
 ```
 
 ## Parser builder
-In addition to the combinators `and`/`then`/`or`, as well as the modifier `map`, 
+In addition to the combinators `and`/`andL`/`andR`/`or`, as well as the modifier `map`, 
 there is a way to build parsers in declarative style.
 
 `buildParser` creates a context which takes care of passing the rest of the input 
-from one parser to the other upon calling `.ev()`, all while taking care of whether `Success` or `Error` was returned.
+from one parser to the other upon calling `.ev()`, all while tracking the return value (`Success` or `Error`) of each one.
 In case of the latter, execution is stopped and the error is returned.
 
 ## Examples
