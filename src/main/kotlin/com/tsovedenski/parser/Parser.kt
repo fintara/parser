@@ -9,6 +9,13 @@ data class Error <out T> (val message: String) : Result<T>()
 typealias Parser <T> = (String) -> Result<T>
 
 fun <T> parse(parser: Parser<T>, input: String): Result<T> = parser(input)
+fun <T> run(parser: Parser<T>, input: String): T? {
+    val result = parse(parser, input)
+    return when (result) {
+        is Error<T>   -> null
+        is Success<T> -> result.value
+    }
+}
 
 operator fun <T> Parser<T>.rem(message: String): Parser<T> = { input ->
     val result = this(input)

@@ -1,5 +1,6 @@
 package com.tsovedenski.parser
 
+import org.junit.Assert
 import org.junit.Test
 
 /**
@@ -55,5 +56,17 @@ class OtherParserTest {
         val p = skipMany1(digit) andR count(4, upper)
 
         assertSuccess(p, input, "ABCD".toList())
+    }
+
+    @Test
+    fun `run parser success`() {
+        val result = run(int, "42A")
+        Assert.assertEquals(42, result)
+    }
+
+    @Test
+    fun `run parser error`() {
+        val result = run(int, "AA")
+        Assert.assertNull(result)
     }
 }

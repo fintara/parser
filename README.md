@@ -60,6 +60,14 @@ when (result) {
 // should print 'A'
 ```
 
+Another possibility is to use `run(parser, input)` that directly returns the value (if succeeded) or `null` (if error).
+
+```kotlin
+val input = "42A"
+val result = run(int, input)
+// should be 42
+```
+
 ## Parser builder
 In addition to the combinators `and`/`then`/`or`, as well as the modifier `map`, 
 there is a way to build parsers in declarative style.
