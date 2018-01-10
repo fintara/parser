@@ -7,7 +7,7 @@ import kotlin.math.pow
 /**
  * Created by Tsvetan Ovedenski on 06/01/2018.
  */
-val takeFirst: Parser<Char> = { input ->
+val any: Parser<Char> = { input ->
     when (input.isEmpty()) {
         true -> Error("end of input")
         else -> Success(input.first(), input.substring(1))
@@ -19,7 +19,7 @@ fun <T> just(value: T): Parser<T> = { input ->
 }
 
 fun satisfy(predicate: (Char) -> Boolean): Parser<Char> = { input ->
-    val result = takeFirst(input)
+    val result = any(input)
 
     when (result) {
         is Error -> result
@@ -32,15 +32,21 @@ fun satisfy(predicate: (Char) -> Boolean): Parser<Char> = { input ->
 
 fun <T> option(default: T, parser: Parser<T>) = parser or just(default)
 
+fun <T> optional(parser: Parser<T>): Parser<Unit> = { input ->
+    val result = parser(input)
+    when (result) {
+        is Error<T>   -> Error(result.message)
+        is Success<T> -> Success(Unit, result.rest)
+    }
+}
+
 fun char(wanted: Char) = satisfy { it == wanted } % "'$wanted'"
 
-val any       = takeFirst
 val space     = satisfy(Char::isWhitespace) % "space"
 val upper     = satisfy(Char::isUpperCase) % "upper"
 val lower     = satisfy(Char::isLowerCase) % "lower"
 val alphaNum  = satisfy(Char::isLetterOrDigit) % "alpha-numeric"
 val letter    = satisfy(Char::isLetter) % "letter"
-
 val digit     = satisfy(Char::isDigit) % "digit"
 
 val uint: Parser<Int> = many1(digit).map { it.joinToString("").toInt() }
@@ -124,6 +130,12 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> = fn@{ input ->
 
     Success(accum, rest)
 }
+
+fun <T, S> sepBy(parser: Parser<T>, sep: Parser<S>): Parser<List<T>> = sepBy1(parser, sep) or just(listOf())
+fun <T, S> sepBy1(parser: Parser<T>, sep: Parser<S>): Parser<List<T>> = (parser and many(sep andR parser)) as Parser<List<T>>
+
+fun <T, S> endBy(parser: Parser<T>, sep: Parser<S>): Parser<List<T>> = many(parser andL sep) as Parser<List<T>>
+fun <T, S> endBy1(parser: Parser<T>, sep: Parser<S>): Parser<List<T>> = many1(parser andL sep) as Parser<List<T>>
 
 fun <T> many(parser: Parser<T>): Parser<List<T>> = fn@{ input ->
     val accum = mutableListOf<T>()

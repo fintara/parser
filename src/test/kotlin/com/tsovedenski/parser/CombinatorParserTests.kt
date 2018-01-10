@@ -86,45 +86,41 @@ class CombinatorParserTests {
     )
 
     @Test
-    fun `or first`() {
-        assertSuccess(
-                digit or upper,
-                "1A",
-                '1'
-        )
-    }
+    fun `or first`() = assertSuccess(
+            digit or upper,
+            "1A",
+            '1',
+            "A"
+    )
 
     @Test
-    fun `or second`() {
-        assertSuccess(
-                digit or upper,
-                "AB",
-                'A'
-        )
-    }
+    fun `or second`() = assertSuccess(
+            digit or upper,
+            "AB",
+            'A',
+            "B"
+    )
 
     @Test
-    fun `or type first`() {
-        assertSuccess(
-                int or upper,
-                "123A",
-                123
-        )
-    }
+    fun `or type first`() = assertSuccess(
+            int or upper,
+            "123A",
+            123,
+            "A"
+    )
 
     @Test
-    fun `or type second`() {
-        assertSuccess(
-                int or upper,
-                "A123",
-                'A'
-        )
-    }
+    fun `or type second`() = assertSuccess(
+            int or upper,
+            "A123",
+            'A',
+            "123"
+    )
 
     @Test
     fun `all but vowels`() {
         val notVowel = noneOf(*"aeiou".toCharArray())
-        assertSuccess(notVowel, "qwerty", 'q')
+        assertSuccess(notVowel, "qwerty", 'q', "werty")
         assertError(notVowel, "ayyy")
     }
 
@@ -150,5 +146,73 @@ class CombinatorParserTests {
     fun `floating number with e-notation`() {
         val input = "6.5e3"
         assertSuccess(float, input, 6500.0)
+    }
+
+    @Test
+    fun `optional success`() {
+        val p = optional(symbol("test")) andR int
+        assertSuccess(p, "test42", 42)
+    }
+
+    @Test
+    fun `optional error`() {
+        val p = optional(symbol("test")) andR int
+        assertError(p, "text42")
+    }
+
+    @Test
+    fun `sepBy success`() {
+        val input = "1 :: 2 :: 3"
+        val p = sepBy(int, symbol(" :: "))
+
+        assertSuccess(p, input, listOf(1, 2, 3))
+    }
+
+    @Test
+    fun `sepBy leaves last separator`() {
+        val input = "1 :: 2 :: "
+        val p = sepBy(int, symbol(" :: "))
+
+        assertSuccess(p, input, listOf(1, 2), " :: ")
+    }
+
+    @Test
+    fun `sepBy1 error`() {
+        val input = "xxx"
+        val p = sepBy1(int, symbol(" :: "))
+
+        assertError(p, input)
+    }
+
+    @Test
+    fun `endBy success`() {
+        val input = "a;b;c;x"
+        val p = endBy(lower, char(';'))
+
+        assertSuccess(p, input, "abc".toList(), "x")
+    }
+
+    @Test
+    fun `endBy does not leave last separator`() {
+        val input = "a;b;c;"
+        val p = endBy(lower, char(';'))
+
+        assertSuccess(p, input, "abc".toList())
+    }
+
+    @Test
+    fun `endBy1 success`() {
+        val input = "a?b?c?d"
+        val p = endBy1(lower, char('?'))
+
+        assertSuccess(p, input, "abc".toList(), "d")
+    }
+
+    @Test
+    fun `endBy1 error`() {
+        val input = "X?Y?"
+        val p = endBy1(lower, char('?'))
+
+        assertError(p, input)
     }
 }

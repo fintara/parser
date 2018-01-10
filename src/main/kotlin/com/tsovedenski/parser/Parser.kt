@@ -71,7 +71,7 @@ infix fun <T> Parser<T>.andL(other: Parser<T>): Parser<T> = { input ->
             val second = other(first.rest)
             when (second) {
                 is Error<T>   -> second
-                is Success<T> -> first
+                is Success<T> -> first.copy(rest = second.rest)
             }
         }
     }

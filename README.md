@@ -29,12 +29,17 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 
 ### Combinators
 * `count(number, parser)` - repeats `parser` as many times as stated
-* `many(parser)` - repeats `parser` until error occurs
-* `many1(parser)` - repeats `parser` at least once until error occurs
-* `skipMany(parser)` - repeats `parser` but does not return any result
-* `skipMany1(parser)` - repeats `parser` at least once but does not return any result
+* `many(parser)` - repeats `parser` 0+ times until error occurs
+* `many1(parser)` - repeats `parser` 1+ times at least once until error occurs
+* `skipMany(parser)` - repeats `parser` 0+ times but does not return any result
+* `skipMany1(parser)` - repeats `parser` 1+ times at least once but does not return any result
+* `sepBy(parser, sep)` - repeats `parser` 0+ times, separated by `sep`
+* `sepBy1(parser, sep)` - repeats `parser` 1+ times, separated by `sep`
+* `endBy(parser, sep)` - like `sepBy`, but input must also end with `sep`
+* `endBy1(parser, sep)` - like `sepBy1`, but input must also end with `sep`
 * `just(value)` - always returns `value`
 * `option(value, parser)` - returns `value` if `parser` fails
+* `optional(parser)` - runs `parser` but does not return any result
 * `pA and pB` - returns both results of parsers `pA` and `pB`
 * `pA andL pB` - returns result of `pA` (left parser) only if `pB` succeeds
 * `pA andR pB` - returns result of `pB` (right parser) only if `pA` succeeds
