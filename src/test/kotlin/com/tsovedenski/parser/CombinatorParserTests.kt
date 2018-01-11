@@ -163,7 +163,7 @@ class CombinatorParserTests {
     @Test
     fun `sepBy success`() {
         val input = "1 :: 2 :: 3"
-        val p = sepBy(int, symbol(" :: "))
+        val p = int sepBy symbol(" :: ")
 
         assertSuccess(p, input, listOf(1, 2, 3))
     }
@@ -171,7 +171,7 @@ class CombinatorParserTests {
     @Test
     fun `sepBy leaves last separator`() {
         val input = "1 :: 2 :: "
-        val p = sepBy(int, symbol(" :: "))
+        val p = int sepBy symbol(" :: ")
 
         assertSuccess(p, input, listOf(1, 2), " :: ")
     }
@@ -179,7 +179,7 @@ class CombinatorParserTests {
     @Test
     fun `sepBy1 error`() {
         val input = "xxx"
-        val p = sepBy1(int, symbol(" :: "))
+        val p = int sepBy1 symbol(" :: ")
 
         assertError(p, input)
     }
@@ -187,7 +187,7 @@ class CombinatorParserTests {
     @Test
     fun `endBy success`() {
         val input = "a;b;c;x"
-        val p = endBy(lower, char(';'))
+        val p = lower endBy char(';')
 
         assertSuccess(p, input, "abc".toList(), "x")
     }
@@ -195,7 +195,7 @@ class CombinatorParserTests {
     @Test
     fun `endBy does not leave last separator`() {
         val input = "a;b;c;"
-        val p = endBy(lower, char(';'))
+        val p = lower endBy char(';')
 
         assertSuccess(p, input, "abc".toList())
     }
@@ -203,7 +203,7 @@ class CombinatorParserTests {
     @Test
     fun `endBy1 success`() {
         val input = "a?b?c?d"
-        val p = endBy1(lower, char('?'))
+        val p = lower endBy1 char('?')
 
         assertSuccess(p, input, "abc".toList(), "d")
     }
@@ -211,7 +211,7 @@ class CombinatorParserTests {
     @Test
     fun `endBy1 error`() {
         val input = "X?Y?"
-        val p = endBy1(lower, char('?'))
+        val p = lower endBy1 char('?')
 
         assertError(p, input)
     }

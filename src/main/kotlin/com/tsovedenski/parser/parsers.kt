@@ -131,11 +131,11 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> = fn@{ input ->
     Success(accum, rest)
 }
 
-fun <T, S> sepBy(parser: Parser<T>, sep: Parser<S>): Parser<List<T>> = sepBy1(parser, sep) or just(listOf())
-fun <T, S> sepBy1(parser: Parser<T>, sep: Parser<S>): Parser<List<T>> = (parser and many(sep andR parser)) as Parser<List<T>>
+infix fun <T, S> Parser<T>.sepBy(sep: Parser<S>): Parser<List<T>> = (this sepBy1 sep) or just(listOf())
+infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this and many(sep andR this)) as Parser<List<T>>
 
-fun <T, S> endBy(parser: Parser<T>, sep: Parser<S>): Parser<List<T>> = many(parser andL sep) as Parser<List<T>>
-fun <T, S> endBy1(parser: Parser<T>, sep: Parser<S>): Parser<List<T>> = many1(parser andL sep) as Parser<List<T>>
+infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep) as Parser<List<T>>
+infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep) as Parser<List<T>>
 
 fun <T> many(parser: Parser<T>): Parser<List<T>> = fn@{ input ->
     val accum = mutableListOf<T>()

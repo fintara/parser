@@ -33,10 +33,10 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `many1(parser)` - repeats `parser` 1+ times at least once until error occurs
 * `skipMany(parser)` - repeats `parser` 0+ times but does not return any result
 * `skipMany1(parser)` - repeats `parser` 1+ times at least once but does not return any result
-* `sepBy(parser, sep)` - repeats `parser` 0+ times, separated by `sep`
-* `sepBy1(parser, sep)` - repeats `parser` 1+ times, separated by `sep`
-* `endBy(parser, sep)` - like `sepBy`, but input must also end with `sep`
-* `endBy1(parser, sep)` - like `sepBy1`, but input must also end with `sep`
+* `parser sepBy sep` - repeats `parser` 0+ times, separated by `sep`
+* `parser sepBy1 sep` - repeats `parser` 1+ times, separated by `sep`
+* `parser endBy sep` - like `sepBy`, but input must also end with `sep`
+* `parser endBy1 sep` - like `sepBy1`, but input must also end with `sep`
 * `just(value)` - always returns `value`
 * `option(value, parser)` - returns `value` if `parser` fails
 * `optional(parser)` - runs `parser` but does not return any result
