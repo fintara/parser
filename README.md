@@ -29,6 +29,8 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 
 ### Combinators
 * `count(number, parser)` - repeats `parser` as many times as stated
+* `choice(list)` - tries list of parsers in order, returning the first success
+* `between(open, close, parser)` - runs `open`, then `parser` and `close`, returning the result of `parser`
 * `many(parser)` - repeats `parser` 0+ times until error occurs
 * `many1(parser)` - repeats `parser` 1+ times at least once until error occurs
 * `skipMany(parser)` - repeats `parser` 0+ times but does not return any result

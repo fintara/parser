@@ -202,3 +202,18 @@ fun <T> skipMany1(parser: Parser<T>): Parser<Unit> = fn@{ input ->
 }
 
 val skipSpaces = skipMany(space)
+
+fun <T> choice(vararg parsers: Parser<T>): Parser<T> = choice(parsers.toList())
+fun <T> choice(parsers: List<Parser<T>>): Parser<T> = fn@{ input ->
+    parsers.forEach {
+        val result = it(input)
+
+        if (result is Success<T>) {
+            return@fn result
+        }
+    }
+
+    Error("choice")
+}
+
+fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T> = (open andR parser andL close) as Parser<T>

@@ -215,4 +215,46 @@ class CombinatorParserTests {
 
         assertError(p, input)
     }
+
+    @Test
+    fun `choice success first`() = assertSuccess(
+            choice(upper, lower, digit, space),
+            "Abcd",
+            'A',
+            "bcd"
+    )
+
+    @Test
+    fun `choice success mid`() = assertSuccess(
+            choice(upper, lower, digit, space),
+            "5bcd",
+            '5',
+            "bcd"
+    )
+
+    @Test
+    fun `choice success last`() = assertSuccess(
+            choice(upper, lower, digit, space),
+            " bcd",
+            ' ',
+            "bcd"
+    )
+
+    @Test
+    fun `choice error`() = assertError(
+            choice(upper, lower, space),
+            "1bcd"
+    )
+
+    @Test
+    fun `between success brackets`() {
+        val brackets = between(char('('), char(')'), int)
+
+        assertSuccess(
+                brackets,
+                "(42)x",
+                42,
+                "x"
+        )
+    }
 }
