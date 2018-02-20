@@ -41,7 +41,7 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `parser endBy1 sep` - like `sepBy1`, but input must also end with `sep`
 * `just(value)` - always returns `value`
 * `option(value, parser)` - returns `value` if `parser` fails
-* `optional(parser)` - runs `parser` but does not return any result
+* `optional(parser)` - tries to run `parser` but does not return any result (does not fail)
 * `pA and pB` - returns both results of parsers `pA` and `pB`
 * `pA andL pB` - returns result of `pA` (left parser) only if `pB` succeeds
 * `pA andR pB` - returns result of `pB` (right parser) only if `pA` succeeds

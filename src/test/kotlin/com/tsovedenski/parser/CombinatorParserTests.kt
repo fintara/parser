@@ -155,9 +155,9 @@ class CombinatorParserTests {
     }
 
     @Test
-    fun `optional error`() {
+    fun `optional not found success`() {
         val p = optional(symbol("test")) andR int
-        assertError(p, "text42")
+        assertSuccess(p, "42test1", 42, "test1")
     }
 
     @Test

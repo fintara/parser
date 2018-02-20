@@ -35,7 +35,7 @@ fun <T> option(default: T, parser: Parser<T>) = parser or just(default)
 fun <T> optional(parser: Parser<T>): Parser<Unit> = { input ->
     val result = parser(input)
     when (result) {
-        is Error<T>   -> Error(result.message)
+        is Error<T>   -> Success(Unit, input)
         is Success<T> -> Success(Unit, result.rest)
     }
 }
