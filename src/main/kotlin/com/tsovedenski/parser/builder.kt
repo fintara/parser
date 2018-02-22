@@ -26,12 +26,16 @@ class ParserContext(input: String) {
         }
     }
 
+    fun fail(message: String = "Fail") {
+        throw handleError(Error<Any>(message))
+    }
+
     private fun <A> handleSuccess(success: Success<A>): A {
         rest = success.rest
         return success.value
     }
 
-    private fun <A> handleError(error: Error<A>): ParserException {
+    private fun handleError(error: Error<*>): ParserException {
         return ParserException(error)
     }
 }
