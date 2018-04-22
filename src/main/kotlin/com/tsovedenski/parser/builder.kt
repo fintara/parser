@@ -8,7 +8,7 @@ fun <T> buildParser(block: ParserContext.() -> T): Parser<T> = { input ->
         val context = ParserContext(input)
         Success(block(context), context.getRest())
     } catch (e: ParserException) {
-        Error(e.error.message)
+        e.error
     }
 }
 
@@ -21,13 +21,13 @@ class ParserContext(input: String) {
     fun <A> Parser<A>.ev(): A {
         val result = this(rest)
         when (result) {
-            is Error<A>   -> throw handleError(result)
+            is Error      -> throw handleError(result)
             is Success<A> -> return handleSuccess(result)
         }
     }
 
     fun fail(message: String = "Fail") {
-        throw handleError(Error<Any>(message))
+        throw handleError(Error(message))
     }
 
     private fun <A> handleSuccess(success: Success<A>): A {
@@ -35,9 +35,9 @@ class ParserContext(input: String) {
         return success.value
     }
 
-    private fun handleError(error: Error<*>): ParserException {
+    private fun handleError(error: Error): ParserException {
         return ParserException(error)
     }
 }
 
-private class ParserException(val error: Error<*>) : Throwable()
+private class ParserException(val error: Error) : Throwable()

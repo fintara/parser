@@ -35,7 +35,7 @@ fun <T> option(default: T, parser: Parser<T>) = parser or just(default)
 fun <T> optional(parser: Parser<T>): Parser<Unit> = { input ->
     val result = parser(input)
     when (result) {
-        is Error<T>   -> Success(Unit, input)
+        is Error      -> Success(Unit, input)
         is Success<T> -> Success(Unit, result.rest)
     }
 }
@@ -54,7 +54,7 @@ val int: Parser<Int> = buildParser {
     val sign = option('x', char('-')).ev()
     val number = uint.ev()
     when (sign) {
-        '-' -> -number
+        '-'  -> -number
         else -> number
     }
 }
@@ -78,7 +78,7 @@ val float: Parser<Double> = buildParser {
     val sign = option('x', char('-')).ev()
     val number = ufloat.ev()
     when (sign) {
-        '-' -> -number
+        '-'  -> -number
         else -> number
     }
 }
@@ -104,7 +104,7 @@ fun symbol(wanted: String): Parser<String> = { input ->
     val result = parser(input)
 
     when (result) {
-        is Error -> result
+        is Error   -> result
         is Success -> when (result.value == wanted) {
             true -> result
             else -> Error("Could not match '$wanted'")
@@ -120,7 +120,7 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> = fn@{ input ->
     do {
         val result = parser(rest)
         when (result) {
-            is Error<T>   -> return@fn Error(result.message)
+            is Error      -> return@fn result
             is Success<T> -> {
                 accum.add(result.value)
                 rest = result.rest
@@ -216,4 +216,5 @@ fun <T> choice(parsers: List<Parser<T>>): Parser<T> = fn@{ input ->
     Error("choice")
 }
 
-fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T> = (open andR parser andL close) as Parser<T>
+fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T>
+        = (open andR parser andL close) as Parser<T>
