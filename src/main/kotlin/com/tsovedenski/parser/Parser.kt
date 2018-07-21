@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package com.tsovedenski.parser
 
 /**
@@ -17,31 +19,49 @@ fun <T> run(parser: Parser<T>, input: String): T? {
     }
 }
 
-operator fun <T> Parser<T>.rem(message: String): Parser<T> = { input ->
+operator fun <T> Parser<T>.rem(message: String): Parser<T> = recover { fail(message) }
+
+infix fun <T> Parser<T>.and(other: Parser<T>): Parser<List<T>> = listOf(this, other).chain()
+
+infix fun <T> Parser<T>.andR(other: Parser<T>): Parser<T> = flatMap { other }
+
+infix fun <T> Parser<T>.andL(other: Parser<T>): Parser<T> = flatMap { x -> other.flatMap { just(x) } }
+
+infix fun <T> Parser<T>.or(other: Parser<T>): Parser<T> = recover(const(other))
+
+fun <A, B> Parser<A>.map(action: (A) -> B): Parser<B> = flatMap { just(action(it)) }
+
+fun <A, B> Parser<A>.flatMap(action: (A) -> Parser<B>): Parser<B> = flatMap(action) { e -> fail(e.message) }
+
+private inline fun <A, B> Parser<A>.flatMap(
+        crossinline success: (A) -> Parser<B>,
+        crossinline error: (Error) -> Parser<B>
+): Parser<B> = { input ->
     val result = this(input)
 
     when (result) {
-        is Error      -> Error(message)
-        is Success<T> -> result
+        is Error      -> error(result)(input)
+        is Success<A> -> success(result.value)(result.rest)
     }
 }
 
-infix fun <T> Parser<T>.and(other: Parser<T>): Parser<List<T>> = { input ->
-    val first = this(input)
+fun <T> Parser<T>.recover(action: (Error) -> Parser<T>): Parser<T> = flatMap(::just, action)
 
-    when (first) {
-        is Error      -> first
-        is Success<T> -> {
-            val second = other(first.rest)
-            when (second) {
-                is Error      -> second
-                is Success<T> -> Success(flatten(first.value, second.value), second.rest)
-            }
+fun <T> List<Parser<T>>.chain(): Parser<List<T>> {
+    if (this.isEmpty()) {
+        return just(listOf())
+    }
+
+    val first = first()
+    val rest = drop(1)
+
+    return first.flatMap { x ->
+        rest.chain().flatMap { xs ->
+            just(listOf(x) + xs)
         }
     }
 }
 
-@Suppress("UNCHECKED_CAST")
 private fun <T> flatten(fst: T, snd: T): List<T> {
     val list = when {
         fst is List<*> && snd is List<*> -> fst + snd
@@ -53,44 +73,4 @@ private fun <T> flatten(fst: T, snd: T): List<T> {
     return list.filter { it != Unit }
 }
 
-infix fun <T> Parser<T>.andR(other: Parser<T>): Parser<T> = { input ->
-    val result = this(input)
-
-    when (result) {
-        is Error      -> result
-        is Success<T> -> other(result.rest)
-    }
-}
-
-infix fun <T> Parser<T>.andL(other: Parser<T>): Parser<T> = { input ->
-    val first = this(input)
-
-    when (first) {
-        is Error      -> first
-        is Success<T> -> {
-            val second = other(first.rest)
-            when (second) {
-                is Error      -> second
-                is Success<T> -> first.copy(rest = second.rest)
-            }
-        }
-    }
-}
-
-infix fun <T> Parser<T>.or(other: Parser<T>): Parser<T> = { input ->
-    val result = this(input)
-
-    when (result) {
-        is Error      -> other(input)
-        is Success<T> -> result
-    }
-}
-
-fun <A, B> Parser<A>.map(action: (A) -> B): Parser<B> = { input ->
-    val result = this(input)
-
-    when (result) {
-        is Error      -> result
-        is Success<A> -> Success(action(result.value), result.rest)
-    }
-}
+private fun <A, B> const(a: A): (B) -> A = { _ -> a }

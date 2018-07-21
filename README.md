@@ -30,16 +30,18 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 ### Combinators
 * `count(number, parser)` - repeats `parser` as many times as stated
 * `choice(list)` - tries list of parsers in order, returning the first success
+* `chain(parsers)` - executes a list of parsers and returns a list of their results
 * `between(open, close, parser)` - runs `open`, then `parser` and `close`, returning the result of `parser`
 * `many(parser)` - repeats `parser` 0+ times until error occurs
-* `many1(parser)` - repeats `parser` 1+ times at least once until error occurs
+* `many1(parser)` - repeats `parser` 1+ times until error occurs
 * `skipMany(parser)` - repeats `parser` 0+ times but does not return any result
-* `skipMany1(parser)` - repeats `parser` 1+ times at least once but does not return any result
+* `skipMany1(parser)` - repeats `parser` 1+ times but does not return any result
 * `parser sepBy sep` - repeats `parser` 0+ times, separated by `sep`
 * `parser sepBy1 sep` - repeats `parser` 1+ times, separated by `sep`
 * `parser endBy sep` - like `sepBy`, but input must also end with `sep`
 * `parser endBy1 sep` - like `sepBy1`, but input must also end with `sep`
 * `just(value)` - always returns `value`
+* `fail(message)` - always fails with `message`
 * `option(value, parser)` - returns `value` if `parser` fails
 * `optional(parser)` - tries to run `parser` but does not return any result (does not fail)
 * `pA and pB` - returns both results of parsers `pA` and `pB`
@@ -47,6 +49,8 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `pA andR pB` - returns result of `pB` (right parser) only if `pA` succeeds
 * `pA or pB` - tries to run `pA` and if fails, returns result of `pB`
 * `parser.map { ... }` - apply function to the result of `parser`
+* `parser.flatMap { ... }` - use the successful result of `parser` and return a new parser
+* `parser.recover { ... }` - use the error of `parser` and return a new parser
 
 ### Misc
 * `parser % "Error message"` - returns a parser with `"Error message"` for error
@@ -61,7 +65,7 @@ val input = "ABCD1234"
 val result = parse(letter, input)
 
 when (result) {
-    is Error<*> -> println(result.message)
+    is Error      -> println(result.message)
     is Success<*> -> println(result.value)
 }
 // should print 'A'

@@ -43,6 +43,14 @@ class OtherParserTest {
     }
 
     @Test
+    fun `skip many success`() {
+        val input = "ABCD"
+        val p = skipMany(digit) andR count(4, upper)
+
+        assertSuccess(p, input, "ABCD".toList())
+    }
+
+    @Test
     fun `skip many1 error`() {
         val input = "ABCD"
         val p = skipMany1(digit) andR count(4, upper)
@@ -68,5 +76,34 @@ class OtherParserTest {
     fun `run parser error`() {
         val result = run(int, "AA")
         Assert.assertNull(result)
+    }
+
+    @Test
+    fun `chain empty list`() {
+        val parsers = listOf<Parser<*>>()
+        assertSuccess(parsers.chain(), "abcd", listOf(), "abcd")
+    }
+
+    @Test
+    fun `chain one parser`() {
+        val parsers = listOf(digit)
+        assertSuccess(parsers.chain(), "1XYZ", "1".toList(), "XYZ")
+    }
+
+    @Test
+    fun `chain parsers`() {
+        val parsers = listOf(digit, lower, upper, lower, char('+'))
+        assertSuccess(parsers.chain(), "1aBc+XYZ", "1aBc+".toList(), "XYZ")
+    }
+
+    @Test
+    fun `error message`() {
+        val errorMsg = "custom error message"
+        val parser = digit % errorMsg
+
+        val result = parse(parser, "")
+        Assert.assertTrue(result is Error)
+        result as Error
+        Assert.assertEquals(errorMsg, result.message)
     }
 }

@@ -18,27 +18,25 @@ fun <T> just(value: T): Parser<T> = { input ->
     Success(value, input)
 }
 
-fun satisfy(predicate: (Char) -> Boolean): Parser<Char> = { input ->
-    val result = any(input)
+fun <T> fail(message: String): Parser<T> = { _ ->
+    Error(message)
+}
 
-    when (result) {
-        is Error -> result
-        is Success -> when (predicate(result.value)) {
-            true -> result
-            else -> Error("satisfy")
+fun satisfy(predicate: (Char) -> Boolean): Parser<Char> {
+    return any.flatMap {
+        if (predicate(it)) {
+            just(it)
+        } else {
+            fail("satisfy")
         }
     }
 }
 
 fun <T> option(default: T, parser: Parser<T>) = parser or just(default)
 
-fun <T> optional(parser: Parser<T>): Parser<Unit> = { input ->
-    val result = parser(input)
-    when (result) {
-        is Error      -> Success(Unit, input)
-        is Success<T> -> Success(Unit, result.rest)
-    }
-}
+fun <T> optional(parser: Parser<T>): Parser<Unit> = parser
+        .map { Unit }
+        .recover { just(Unit) }
 
 fun char(wanted: Char) = satisfy { it == wanted } % "'$wanted'"
 
@@ -99,36 +97,21 @@ fun oneOf(possible: List<Char>) = satisfy { it in possible } % "one of $possible
 fun noneOf(vararg possible: Char) = noneOf(possible.toList())
 fun noneOf(possible: List<Char>) = satisfy { it !in possible } % "none of $possible"
 
-fun symbol(wanted: String): Parser<String> = { input ->
+fun symbol(wanted: String): Parser<String> {
     val parser = count(wanted.length, any).map { it.joinToString("") }
-    val result = parser(input)
-
-    when (result) {
-        is Error   -> result
-        is Success -> when (result.value == wanted) {
-            true -> result
-            else -> Error("Could not match '$wanted'")
+    return parser.flatMap { word ->
+        when (word) {
+            wanted -> just(word)
+            else   -> fail("Could not match '$wanted'")
         }
     }
 }
 
-fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> = fn@{ input ->
-    val accum = mutableListOf<T>()
-
-    var i = 0
-    var rest = input
-    do {
-        val result = parser(rest)
-        when (result) {
-            is Error      -> return@fn result
-            is Success<T> -> {
-                accum.add(result.value)
-                rest = result.rest
-            }
-        }
-    } while (++i < number)
-
-    Success(accum, rest)
+fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> {
+    if (number <= 0) {
+        return just(listOf())
+    }
+    return List(number) { parser }.chain()
 }
 
 infix fun <T, S> Parser<T>.sepBy(sep: Parser<S>): Parser<List<T>> = (this sepBy1 sep) or just(listOf())
@@ -137,83 +120,31 @@ infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this and m
 infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep) as Parser<List<T>>
 infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep) as Parser<List<T>>
 
-fun <T> many(parser: Parser<T>): Parser<List<T>> = fn@{ input ->
-    val accum = mutableListOf<T>()
-    var rest  = input
-
-    do {
-        val result = parser(rest)
-        if (result is Success) {
-            accum.add(result.value)
-            rest = result.rest
-        }
-    } while (result is Success)
-
-    Success(accum, rest)
+private fun <T> manyAccum(parser: Parser<T>, list: MutableList<T>): Parser<List<T>> {
+    return parser
+            .flatMap {
+                list.add(it)
+                manyAccum(parser, list)
+            }
+            .recover { just(list) }
 }
+fun <T> many(parser: Parser<T>): Parser<List<T>> = manyAccum(parser, mutableListOf())
 
-fun <T> many1(parser: Parser<T>): Parser<List<T>> = fn@{ input ->
-    val accum =  mutableListOf<T>()
+fun <T> many1(parser: Parser<T>): Parser<List<T>> = parser.flatMap { x -> many(parser).flatMap { xs -> just(listOf(x) + xs) } }
 
-    var result: Result<T>
-    var rest = input
+fun <T> skipMany(parser: Parser<T>): Parser<Unit> = parser.flatMap { skipMany(parser) }.recover { just(Unit) }
 
-    do {
-        result = parser(rest)
-        if (result is Success) {
-            accum.add(result.value)
-            rest = result.rest
-        }
-    } while (result is Success)
-
-    when (accum.isEmpty()) {
-        true -> Error((result as Error).message)
-        else -> Success(accum, rest)
-    }
-}
-
-fun <T> skipMany(parser: Parser<T>): Parser<Unit> = fn@{ input ->
-    var rest = input
-    do {
-        val result = parser(rest)
-        if (result is Success) {
-            rest = result.rest
-        }
-    } while (result is Success)
-
-    Success(Unit, rest)
-}
-
-fun <T> skipMany1(parser: Parser<T>): Parser<Unit> = fn@{ input ->
-    var more1 = false
-    var rest = input
-    do {
-        val result = parser(rest)
-        if (result is Success) {
-            more1 = true
-            rest = result.rest
-        }
-    } while (result is Success)
-
-    when (more1) {
-        false -> Error("skip many1")
-        else -> Success(Unit, rest)
-    }
-}
+fun <T> skipMany1(parser: Parser<T>): Parser<Unit> = parser.flatMap { skipMany(parser).recover { just(Unit) } }
 
 val skipSpaces = skipMany(space)
 
 fun <T> choice(vararg parsers: Parser<T>): Parser<T> = choice(parsers.toList())
-fun <T> choice(parsers: List<Parser<T>>): Parser<T> = fn@{ input ->
-    parsers.forEach {
-        val result = it(input)
-
-        if (result is Success<T>) {
-            return@fn result
-        }
+fun <T> choice(parsers: List<Parser<T>>): Parser<T> {
+    if (parsers.isEmpty()) {
+        return fail("choice")
     }
 
-    Error("choice")
+    return parsers.first().recover { choice(parsers.drop(1)) }
 }
 
 fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T>

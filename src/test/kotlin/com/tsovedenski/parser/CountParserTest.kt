@@ -7,6 +7,7 @@ import org.junit.Test
  */
 class CountParserTest {
 
+    @Test fun emptyList() = testSuccess(upper, 0, "ABCD", listOf(), "ABCD")
     @Test fun testS001() = testSuccess(upper, 5, "ABCDE12345", "ABCDE".toList(), "12345")
     @Test fun testS002() = testSuccess(
             digit.map { it.toString().toInt() },
