@@ -21,7 +21,7 @@ fun <T> run(parser: Parser<T>, input: String): T? {
 
 operator fun <T> Parser<T>.rem(message: String): Parser<T> = recover { fail(message) }
 
-infix fun <T> Parser<T>.and(other: Parser<T>): Parser<List<T>> = listOf(this, other).chain()
+infix fun <T> Parser<T>.and(other: Parser<T>): Parser<List<T>> = listOf(this, other).chain().map { flatten(it[0], it[1]) }
 
 infix fun <T> Parser<T>.andR(other: Parser<T>): Parser<T> = flatMap { other }
 
