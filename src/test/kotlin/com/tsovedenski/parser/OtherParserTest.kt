@@ -106,4 +106,22 @@ class OtherParserTest {
         result as Error
         Assert.assertEquals(errorMsg, result.message)
     }
+
+    @Test
+    fun `version extract 1`() {
+        val input = "cask: 12.345.678,9000 (auto_update)"
+        val expected = "12.345.678,9000"
+
+        val parser = string("cask: ") andR many1(noneOf(' ')).map { it.joinToString("") }
+        assertSuccess(parser, input, expected, " (auto_update)")
+    }
+
+    @Test
+    fun `version extract 2`() {
+        val input = "cask: 12.345.678,9000 (auto_update)"
+        val expected = "12.345.678,9000"
+
+        val parser = many1(noneOf(' ')) andR skipSpaces andR many1(noneOf(' ')).map { it.joinToString("") }
+        assertSuccess(parser, input, expected, " (auto_update)")
+    }
 }

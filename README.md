@@ -24,7 +24,7 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `oneOf(list)` - any character in the provided list
 * `noneOf(list)` - character should not be in the provided list
 * `char(ch)` - character equal to the provided one
-* `symbol(str)` - string equal to the provided one
+* `string(str)` - string equal to the provided one
 * `satisfy(pred)` - character for which provided predicate returns true
 
 ### Combinators

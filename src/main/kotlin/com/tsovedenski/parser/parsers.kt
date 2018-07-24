@@ -18,7 +18,7 @@ fun <T> just(value: T): Parser<T> = { input ->
     Success(value, input)
 }
 
-fun <T> fail(message: String): Parser<T> = { _ ->
+fun fail(message: String): Parser<Nothing> = { _ ->
     Error(message)
 }
 
@@ -97,7 +97,7 @@ fun oneOf(possible: List<Char>) = satisfy { it in possible } % "one of $possible
 fun noneOf(vararg possible: Char) = noneOf(possible.toList())
 fun noneOf(possible: List<Char>) = satisfy { it !in possible } % "none of $possible"
 
-fun symbol(wanted: String): Parser<String> {
+fun string(wanted: String): Parser<String> {
     val parser = count(wanted.length, any).map { it.joinToString("") }
     return parser.flatMap { word ->
         when (word) {

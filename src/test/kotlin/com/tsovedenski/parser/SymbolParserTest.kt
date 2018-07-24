@@ -7,7 +7,7 @@ import org.junit.Test
  */
 class SymbolParserTest {
 
-    @Test fun testS001() = assertSuccess(symbol("//comment"), "//comment and else", "//comment", " and else")
+    @Test fun testS001() = assertSuccess(string("//comment"), "//comment and else", "//comment", " and else")
 
-    @Test fun testE001() = assertError(symbol("wanted string"), "another string")
+    @Test fun testE001() = assertError(string("wanted string"), "another string")
 }

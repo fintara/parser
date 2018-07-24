@@ -51,7 +51,7 @@ class CombinatorParserTests {
     @Test
     fun `andR first fails`() {
         assertError(
-                digit andR symbol("ABC"),
+                digit andR string("ABC"),
                 "xABC"
         )
     }
@@ -60,7 +60,7 @@ class CombinatorParserTests {
     fun `andR success`() {
         val expected = "!@#"
         assertSuccess(
-                digit andR symbol(expected),
+                digit andR string(expected),
                 "1!@#",
                 expected
         )
@@ -150,20 +150,20 @@ class CombinatorParserTests {
 
     @Test
     fun `optional success`() {
-        val p = optional(symbol("test")) andR int
+        val p = optional(string("test")) andR int
         assertSuccess(p, "test42", 42)
     }
 
     @Test
     fun `optional not found success`() {
-        val p = optional(symbol("test")) andR int
+        val p = optional(string("test")) andR int
         assertSuccess(p, "42test1", 42, "test1")
     }
 
     @Test
     fun `sepBy success`() {
         val input = "1 :: 2 :: 3"
-        val p = int sepBy symbol(" :: ")
+        val p = int sepBy string(" :: ")
 
         assertSuccess(p, input, listOf(1, 2, 3))
     }
@@ -171,7 +171,7 @@ class CombinatorParserTests {
     @Test
     fun `sepBy leaves last separator`() {
         val input = "1 :: 2 :: "
-        val p = int sepBy symbol(" :: ")
+        val p = int sepBy string(" :: ")
 
         assertSuccess(p, input, listOf(1, 2), " :: ")
     }
@@ -179,7 +179,7 @@ class CombinatorParserTests {
     @Test
     fun `sepBy1 error`() {
         val input = "xxx"
-        val p = int sepBy1 symbol(" :: ")
+        val p = int sepBy1 string(" :: ")
 
         assertError(p, input)
     }
