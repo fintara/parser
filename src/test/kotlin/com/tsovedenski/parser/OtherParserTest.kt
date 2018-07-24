@@ -124,4 +124,20 @@ class OtherParserTest {
         val parser = many1(noneOf(' ')) andR skipSpaces andR many1(noneOf(' ')).map { it.joinToString("") }
         assertSuccess(parser, input, expected, " (auto_update)")
     }
+
+    @Test
+    fun `lookahead success does not consume input`() {
+        val parser = lookahead(string("test"))
+        val input = "testing"
+
+        assertSuccess(parser, input, "test", input)
+    }
+
+    @Test
+    fun `lookahead error does not consume input`() {
+        val parser = lookahead(string("test"))
+        val input = "something"
+
+        assertError(parser, input)
+    }
 }

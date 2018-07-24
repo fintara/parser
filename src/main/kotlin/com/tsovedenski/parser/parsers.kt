@@ -129,8 +129,10 @@ private fun <T> manyAccum(parser: Parser<T>, list: MutableList<T>): Parser<List<
             .recover { just(list) }
 }
 fun <T> many(parser: Parser<T>): Parser<List<T>> = manyAccum(parser, mutableListOf())
+fun manyString(parser: Parser<Char>): Parser<String> = many(parser).map { it.joinToString("") }
 
 fun <T> many1(parser: Parser<T>): Parser<List<T>> = parser.flatMap { x -> many(parser).flatMap { xs -> just(listOf(x) + xs) } }
+fun many1String(parser: Parser<Char>): Parser<String> = many1(parser).map { it.joinToString("") }
 
 fun <T> skipMany(parser: Parser<T>): Parser<Unit> = parser.flatMap { skipMany(parser) }.recover { just(Unit) }
 
@@ -149,3 +151,12 @@ fun <T> choice(parsers: List<Parser<T>>): Parser<T> {
 
 fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T>
         = (open andR parser andL close) as Parser<T>
+
+fun <T> lookahead(parser: Parser<T>): Parser<T> = { input ->
+    val result = parser(input)
+
+    when (result) {
+        is Error   -> result
+        is Success -> result.copy(rest = input)
+    }
+}
