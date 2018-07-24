@@ -117,8 +117,8 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> {
 infix fun <T, S> Parser<T>.sepBy(sep: Parser<S>): Parser<List<T>> = (this sepBy1 sep) or just(listOf())
 infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this and many(sep andR this)) as Parser<List<T>>
 
-infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep) as Parser<List<T>>
-infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep) as Parser<List<T>>
+infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep)
+infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep)
 
 private fun <T> manyAccum(parser: Parser<T>, list: MutableList<T>): Parser<List<T>> {
     return parser
@@ -140,6 +140,7 @@ fun <T> skipMany1(parser: Parser<T>): Parser<Unit> = parser.flatMap { skipMany(p
 
 val skipSpaces = skipMany(space)
 
+fun <T> chain(vararg parsers: Parser<T>) = parsers.toList().chain()
 fun <T> choice(vararg parsers: Parser<T>): Parser<T> = choice(parsers.toList())
 fun <T> choice(parsers: List<Parser<T>>): Parser<T> {
     if (parsers.isEmpty()) {
@@ -150,7 +151,7 @@ fun <T> choice(parsers: List<Parser<T>>): Parser<T> {
 }
 
 fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T>
-        = (open andR parser andL close) as Parser<T>
+        = open andR parser andL close
 
 fun <T> lookahead(parser: Parser<T>): Parser<T> = { input ->
     val result = parser(input)

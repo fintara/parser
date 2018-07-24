@@ -18,7 +18,7 @@ class UrlParserTest {
     private val protocol = string("https") or string("http")
     private val port = char(':') andR uint
     private val domain = many1String(noneOf("/\\ \t!@#$%^&*()[]{}<>;:\"'~`+=".toList()))
-    private val path = many1String(noneOf('/')) sepBy char('/')
+    private val path = many1String(noneOf("/?".toList())) sepBy char('/')
     private val keyValue = listOf(many1String(noneOf("=&#".toList())), string("="), many1String(noneOf("&#".toList()))).chain()
             .map { Pair(it[0], it[2]) }
     private val params = (keyValue sepBy1 char('&')).map { it.associateBy({ it.first }, { it.second }) }
@@ -49,7 +49,7 @@ class UrlParserTest {
 
     private val parser = buildParser {
         val protocol = protocol.ev()
-        
+
         string("://").ev()
 
         val domain = domain.ev()
