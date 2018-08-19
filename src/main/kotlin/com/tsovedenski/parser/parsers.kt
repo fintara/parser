@@ -48,6 +48,7 @@ val letter    = satisfy(Char::isLetter) % "letter"
 val digit     = satisfy(Char::isDigit) % "digit"
 
 val uint: Parser<Int> = many1(digit).map { it.joinToString("").toInt() }
+val ulong: Parser<Long> = many1(digit).map { it.joinToString("").toLong() }
 val int: Parser<Int> = buildParser {
     val sign = option('x', char('-')).ev()
     val number = uint.ev()
@@ -60,7 +61,7 @@ val int: Parser<Int> = buildParser {
 private val floatP: Parser<Double> = buildParser {
     val base = int.ev()
     char('.').ev()
-    val frac = int.ev()
+    val frac = ulong.ev()
     "$base.$frac".toDouble()
 }
 
@@ -117,8 +118,8 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> {
 infix fun <T, S> Parser<T>.sepBy(sep: Parser<S>): Parser<List<T>> = (this sepBy1 sep) or just(listOf())
 infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this and many(sep andR this)) as Parser<List<T>>
 
-infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep) as Parser<List<T>>
-infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep) as Parser<List<T>>
+infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep)
+infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep)
 
 private fun <T> manyAccum(parser: Parser<T>, list: MutableList<T>): Parser<List<T>> {
     return parser
@@ -150,7 +151,7 @@ fun <T> choice(parsers: List<Parser<T>>): Parser<T> {
 }
 
 fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T>
-        = (open andR parser andL close) as Parser<T>
+        = (open andR parser andL close)
 
 fun <T> lookahead(parser: Parser<T>): Parser<T> = { input ->
     val result = parser(input)

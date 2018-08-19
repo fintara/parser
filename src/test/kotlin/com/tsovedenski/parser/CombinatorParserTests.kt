@@ -34,6 +34,13 @@ class CombinatorParserTests {
     }
 
     @Test
+    fun `floating point number`() {
+        val value = -87657265.666
+        val input = "-8.7657265666E7"
+        assertSuccess(float, input, value)
+    }
+
+    @Test
     fun `phone`() {
         val group = count(3, digit).map { it.joinToString("") }
         val dash  = char('-')
