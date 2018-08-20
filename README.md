@@ -117,3 +117,26 @@ val sum = buildParser {
 val result = parse(sum, "3+4")
 // should be Success(value=7, rest=)
 ```
+
+## Expression parser builder
+There is a possibility to create a parser for an expression that also evaluates it.
+It is only necessary to provide an operators table where all operators are listed and their functions defined.
+Operators table is a list of Operator lists ordered in descending precedence.
+
+#### Example
+In this example we support incrementation, multiplication and addition/subtraction,
+with `++` having the highest precedence.
+```kotlin
+val table: OperatorTable<Int> = listOf(
+    listOf( postfix("++") { it + 1 } ),
+    listOf( binary("*", Assoc.Left) { x, y -> x * y } ),
+    listOf(
+        binary("+", Assoc.Left) { x, y -> x + y },
+        binary("-", Assoc.Left) { x, y -> x - y }
+    )
+)
+
+val expr = mkParser(table, uint)
+run(expr, "1+2*3") // should be 7
+run(expr, "2++") // should be 3
+```
