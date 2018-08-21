@@ -45,9 +45,10 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `option(value, parser)` - returns `value` if `parser` fails
 * `optional(parser)` - tries to run `parser` but does not return any result (does not fail)
 * `lookahead(parser)` - executes `parser` without consuming any input
-* `pA and pB` - returns both results of parsers `pA` and `pB`
-* `pA andL pB` - returns result of `pA` (left parser) only if `pB` succeeds
-* `pA andR pB` - returns result of `pB` (right parser) only if `pA` succeeds
+* `pA and pB` - returns both results of parsers `pA` and `pB` as a pair
+* `pA andF pB` - (and-flat) returns both results of parsers `pA` and `pB` flattened to a list without `Unit`s
+* `pA andL pB` - (and-left) returns result of `pA` (left parser) only if `pB` succeeds
+* `pA andR pB` - (and-right) returns result of `pB` (right parser) only if `pA` succeeds
 * `pA or pB` - tries to run `pA` and if fails, returns result of `pB`
 * `parser.map { ... }` - apply function to the result of `parser`
 * `parser.flatMap { ... }` - use the successful result of `parser` and return a new parser

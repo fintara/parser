@@ -23,6 +23,8 @@ operator fun <T> Parser<T>.rem(message: String): Parser<T> = recover { fail(mess
 
 infix fun <A, B> Parser<A>.and(other: Parser<B>): Parser<Pair<A, B>> = flatMap { a -> other.map { b -> Pair(a, b) } }
 
+infix fun <T> Parser<T>.andF(other: Parser<T>): Parser<List<T>> = flatMap { a -> other.map { b -> flatten(a, b) } }
+
 infix fun <A, B> Parser<A>.andR(other: Parser<B>): Parser<B> = flatMap { other }
 
 infix fun <A, B> Parser<A>.andL(other: Parser<B>): Parser<A> = flatMap { x -> other.flatMap { just(x) } }
@@ -60,4 +62,15 @@ fun <T> List<Parser<T>>.chain(): Parser<List<T>> {
             just(listOf(x) + xs)
         }
     }
+}
+
+private fun <T> flatten(fst: T, snd: T): List<T> {
+    val list = when {
+        fst is List<*> && snd is List<*> -> fst + snd
+        fst is List<*> -> fst + listOf(snd)
+        snd is List<*> -> listOf(fst) + snd
+        else -> listOf(fst, snd)
+    } as List<T>
+
+    return list.filter { it != Unit }
 }

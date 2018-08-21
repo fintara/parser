@@ -24,7 +24,7 @@ class CombinatorParserTests {
         val operator = oneOf(*"+-*/^".toCharArray())
         val tail = chain(operator, number)
         val tails = many1(tail).map { it.flatten() }
-        val expr = number and tails
+        val expr = chain(number.map(::listOf), tails).map { it.flatten() }
 
         assertSuccess(
                 expr,
@@ -57,7 +57,7 @@ class CombinatorParserTests {
         assertSuccess(
                 phone,
                 "123-456-789",
-                listOf("123", '-', "456", '-', "789")
+                listOf("123", "456", "789")
         )
     }
 

@@ -115,7 +115,7 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> {
 }
 
 infix fun <T, S> Parser<T>.sepBy(sep: Parser<S>): Parser<List<T>> = (this sepBy1 sep) or just(listOf())
-infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this and many(sep andR this)) as Parser<List<T>>
+infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this andF many(sep andR this)) as Parser<List<T>>
 
 infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep)
 infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep)
