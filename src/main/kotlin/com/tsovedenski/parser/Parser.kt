@@ -23,7 +23,7 @@ interface ParserBuilder <out T> {
     fun build(): Parser<T>
 }
 
-operator fun <T> Parser<T>.rem(message: String): Parser<T> = recover { fail(message) }
+operator fun <T> Parser<T>.rem(message: String): Parser<T> = recoverWith { fail(message) }
 
 infix fun <A, B> Parser<A>.and(other: Parser<B>): Parser<Pair<A, B>> = flatMap { a -> other.map { b -> Pair(a, b) } }
 
@@ -33,7 +33,7 @@ infix fun <A, B> Parser<A>.andR(other: Parser<B>): Parser<B> = flatMap { other }
 
 infix fun <A, B> Parser<A>.andL(other: Parser<B>): Parser<A> = flatMap { x -> other.flatMap { just(x) } }
 
-infix fun <T> Parser<T>.or(other: Parser<T>): Parser<T> = recover { other }
+infix fun <T> Parser<T>.or(other: Parser<T>): Parser<T> = recoverWith { other }
 
 fun <A, B> Parser<A>.map(action: (A) -> B): Parser<B> = flatMap { just(action(it)) }
 
@@ -51,7 +51,7 @@ private inline fun <A, B> Parser<A>.flatMap(
     }
 }
 
-fun <T> Parser<T>.recover(action: (Error) -> Parser<T>): Parser<T> = flatMap(::just, action)
+fun <T> Parser<T>.recoverWith(action: (Error) -> Parser<T>): Parser<T> = flatMap(::just, action)
 
 fun <T> List<Parser<T>>.chain(): Parser<List<T>> {
     if (this.isEmpty()) {

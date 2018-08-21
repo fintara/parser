@@ -14,9 +14,10 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `letter` - any letter
 * `digit` - any digit 0..9
 * `alphaNum` - any letter or digit
-* `int` - an integer
-* `float` - a floating-point number (decimal or e-notation)
-* `number` - a floating-point or integer number
+* `uint/int` - an integer (unsigned or signed)
+* `ulong/long` - a long (unsigned or signed)
+* `ufloat/float` - a floating-point number (decimal or e-notation, unsigned or signed)
+* `unumber/number` - a floating-point or integer number
 * `eof` - end of input
 * `skipSpaces` - skip arbitrary number of spaces
 
@@ -52,7 +53,7 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `pA or pB` - tries to run `pA` and if fails, returns result of `pB`
 * `parser.map { ... }` - apply function to the result of `parser`
 * `parser.flatMap { ... }` - use the successful result of `parser` and return a new parser
-* `parser.recover { ... }` - use the error of `parser` and return a new parser
+* `parser.recoverWith { ... }` - use the error of `parser` and return a new parser
 
 ### Misc
 * `parser % "Error message"` - returns a parser with `"Error message"` for error

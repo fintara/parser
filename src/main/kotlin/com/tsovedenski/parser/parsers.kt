@@ -36,7 +36,7 @@ fun <T> option(default: T, parser: Parser<T>) = parser or just(default)
 
 fun <T> optional(parser: Parser<T>): Parser<Unit> = parser
         .map { Unit }
-        .recover { just(Unit) }
+        .recoverWith { just(Unit) }
 
 fun char(wanted: Char) = satisfy { it == wanted } % "'$wanted'"
 
@@ -49,9 +49,18 @@ val digit     = satisfy(Char::isDigit) % "digit"
 
 val uint: Parser<Int> = many1(digit).map { it.joinToString("").toInt() }
 val ulong: Parser<Long> = many1(digit).map { it.joinToString("").toLong() }
+
 val int: Parser<Int> = buildParser {
     val sign = option('x', char('-')).ev()
     val number = uint.ev()
+    when (sign) {
+        '-'  -> -number
+        else -> number
+    }
+}
+val long: Parser<Long> = buildParser {
+    val sign = option('x', char('-')).ev()
+    val number = ulong.ev()
     when (sign) {
         '-'  -> -number
         else -> number
@@ -127,7 +136,7 @@ private fun <T> manyAccum(parser: Parser<T>, list: MutableList<T>): Parser<List<
                 list.add(it)
                 manyAccum(parser, list)
             }
-            .recover { just(list) }
+            .recoverWith { just(list) }
 }
 fun <T> many(parser: Parser<T>): Parser<List<T>> = manyAccum(parser, mutableListOf())
 fun manyString(parser: Parser<Char>): Parser<String> = many(parser).map { it.joinToString("") }
@@ -135,9 +144,9 @@ fun manyString(parser: Parser<Char>): Parser<String> = many(parser).map { it.joi
 fun <T> many1(parser: Parser<T>): Parser<List<T>> = parser.flatMap { x -> many(parser).flatMap { xs -> just(listOf(x) + xs) } }
 fun many1String(parser: Parser<Char>): Parser<String> = many1(parser).map { it.joinToString("") }
 
-fun <T> skipMany(parser: Parser<T>): Parser<Unit> = parser.flatMap { skipMany(parser) }.recover { just(Unit) }
+fun <T> skipMany(parser: Parser<T>): Parser<Unit> = parser.flatMap { skipMany(parser) }.recoverWith { just(Unit) }
 
-fun <T> skipMany1(parser: Parser<T>): Parser<Unit> = parser.flatMap { skipMany(parser).recover { just(Unit) } }
+fun <T> skipMany1(parser: Parser<T>): Parser<Unit> = parser.flatMap { skipMany(parser).recoverWith { just(Unit) } }
 
 val skipSpaces = skipMany(space)
 
@@ -148,7 +157,7 @@ fun <T> choice(parsers: List<Parser<T>>): Parser<T> {
         return fail("choice")
     }
 
-    return parsers.first().recover { choice(parsers.drop(1)) }
+    return parsers.first().recoverWith { choice(parsers.drop(1)) }
 }
 
 fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T>
