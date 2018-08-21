@@ -153,6 +153,8 @@ fun <T> choice(parsers: List<Parser<T>>): Parser<T> {
 fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T>
         = (open andR parser andL close)
 
+fun <T> parens(parser: Parser<T>): Parser<T> = between(char('('), char(')'), parser)
+
 fun <T> lookahead(parser: Parser<T>): Parser<T> = { input ->
     val result = parser(input)
 

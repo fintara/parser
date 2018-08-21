@@ -26,7 +26,7 @@ class ParserContext(input: String) {
         }
     }
 
-    fun fail(message: String = "Fail") {
+    fun fail(message: String = "Fail"): Nothing {
         throw handleError(Error(message))
     }
 
