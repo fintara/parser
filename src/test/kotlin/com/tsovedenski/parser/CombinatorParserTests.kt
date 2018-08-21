@@ -9,9 +9,9 @@ class CombinatorParserTests {
 
     @Test
     fun `arithmetic expression`() {
-        val tail = oneOf('+', '-', '*', '/') and int
+        val tail = chain(oneOf('+', '-', '*', '/'), int)
         val tails = many1(tail).map { it.flatten() }
-        val expr = int and tails
+        val expr = chain(int.map { listOf(it) }, tails).map { it.flatten() }
 
         assertSuccess(
                 expr,
@@ -22,9 +22,9 @@ class CombinatorParserTests {
     @Test
     fun `arithmetic expression 2`() {
         val operator = oneOf(*"+-*/^".toCharArray())
-        val tail = operator and number
+        val tail = chain(operator, number)
         val tails = many1(tail).map { it.flatten() }
-        val expr = number and tails
+        val expr = chain(number.map(::listOf), tails).map { it.flatten() }
 
         assertSuccess(
                 expr,
@@ -44,14 +44,27 @@ class CombinatorParserTests {
     fun `phone`() {
         val group = count(3, digit).map { it.joinToString("") }
         val dash  = char('-')
-        val phone = group and
-                    dash and group and
-                    dash and group
+        val phone = chain(group, dash,
+                          group, dash,
+                          group)
 
         assertSuccess(
                 phone,
                 "123-456-789",
                 listOf("123", '-', "456", '-', "789")
+        )
+    }
+
+    @Test
+    fun `phone 2`() {
+        val group = count(3, digit).map { it.joinToString("") }
+        val dash  = char('-')
+        val phone = group sepBy1 dash
+
+        assertSuccess(
+                phone,
+                "123-456-789",
+                listOf("123", "456", "789")
         )
     }
 

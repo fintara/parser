@@ -25,13 +25,15 @@ interface ParserBuilder <out T> {
 
 operator fun <T> Parser<T>.rem(message: String): Parser<T> = recover { fail(message) }
 
-infix fun <T> Parser<T>.and(other: Parser<T>): Parser<List<T>> = listOf(this, other).chain().map { flatten(it[0], it[1]) }
+infix fun <A, B> Parser<A>.and(other: Parser<B>): Parser<Pair<A, B>> = flatMap { a -> other.map { b -> Pair(a, b) } }
+
+infix fun <T> Parser<T>.andF(other: Parser<T>): Parser<List<T>> = flatMap { a -> other.map { b -> flatten(a, b) } }
 
 infix fun <A, B> Parser<A>.andR(other: Parser<B>): Parser<B> = flatMap { other }
 
 infix fun <A, B> Parser<A>.andL(other: Parser<B>): Parser<A> = flatMap { x -> other.flatMap { just(x) } }
 
-infix fun <T> Parser<T>.or(other: Parser<T>): Parser<T> = recover(const(other))
+infix fun <T> Parser<T>.or(other: Parser<T>): Parser<T> = recover { other }
 
 fun <A, B> Parser<A>.map(action: (A) -> B): Parser<B> = flatMap { just(action(it)) }
 
@@ -69,12 +71,10 @@ fun <T> List<Parser<T>>.chain(): Parser<List<T>> {
 private fun <T> flatten(fst: T, snd: T): List<T> {
     val list = when {
         fst is List<*> && snd is List<*> -> fst + snd
-        fst is List<*>                   -> fst + listOf(snd)
-        snd is List<*>                   -> listOf(fst) + snd
-        else                             -> listOf(fst, snd)
+        fst is List<*> -> fst + listOf(snd)
+        snd is List<*> -> listOf(fst) + snd
+        else -> listOf(fst, snd)
     } as List<T>
 
     return list.filter { it != Unit }
 }
-
-private fun <A, B> const(a: A): (B) -> A = { _ -> a }

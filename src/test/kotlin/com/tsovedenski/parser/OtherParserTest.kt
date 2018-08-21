@@ -11,7 +11,7 @@ class OtherParserTest {
     @Test
     fun `eof success`() {
         val input = "A1"
-        val p = upper and digit and eof
+        val p = upper andF digit andF eof
 
         assertSuccess(p, input, input.toList())
     }
