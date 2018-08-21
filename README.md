@@ -136,7 +136,7 @@ val table: OperatorTable<Int> = listOf(
     )
 )
 
-val expr = mkParser(table, uint)
+val expr = buildExpressionParser(table, uint)
 run(expr, "1+2*3") // should be 7
 run(expr, "2++") // should be 3
 ```

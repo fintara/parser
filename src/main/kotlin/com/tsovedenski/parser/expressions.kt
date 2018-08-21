@@ -27,12 +27,11 @@ fun <T> postfix(symbol: String, f: (T) -> T): Postfix<T> =
 
 typealias OperatorTable <T> = List<List<Operator<T>>>
 
-// todo: see ExpressionParserBuilderTest::mkParser
-//fun <T> buildExpressionParser(operators: OperatorTable<T>, simpleExpr: Parser<T>): Parser<T>
-//    = operators.fold(simpleExpr, ::makeParser)
-
-fun <T> buildExpressionParser(operators: OperatorTable<T>): (Parser<T>) -> Parser<T>
-    = { simpleExpr -> operators.fold(simpleExpr, ::makeParser) }
+fun <T> buildExpressionParser(operators: OperatorTable<T>,
+                              simpleExpr: Parser<T>,
+                              parens: Boolean = false): Parser<T>
+    =   if (parens) WrappingBuilder(operators, ::parens, simpleExpr).build()
+        else operators.fold(simpleExpr, ::makeParser)
 
 private fun <T> makeParser(term: Parser<T>, ops: List<Operator<T>>): Parser<T> {
     val pentuple= ops.foldRight(Pentuple(), ::splitOp)
@@ -40,8 +39,8 @@ private fun <T> makeParser(term: Parser<T>, ops: List<Operator<T>>): Parser<T> {
     val rassocOp = choice(pentuple.rassoc)
     val lassocOp = choice(pentuple.lassoc)
     val nassocOp = choice(pentuple.nassoc)
-    val prefixOp = choice(pentuple.prefix)
-    val postfixOp = choice(pentuple.postfix)
+    val prefixOp   = choice(pentuple.prefix)
+    val postfixOp  = choice(pentuple.postfix)
 
     val ambiguousRight = ambiguous(Assoc.Right, rassocOp)
     val ambiguousLeft = ambiguous(Assoc.Left, lassocOp)
@@ -65,10 +64,7 @@ private fun <T> makeParser(term: Parser<T>, ops: List<Operator<T>>): Parser<T> {
         (ambiguousRight or ambiguousLeft or ambiguousNone or just(f(x, y))).ev()
     }}
 
-    return buildParser {
-        val x = termP.ev()
-        (rassocP(x) or lassocP(x) or nassocP(x) or just(x)).ev()
-    }
+    return termP.flatMap { x -> rassocP(x) or lassocP(x) or nassocP(x) or just(x) }
 }
 
 private fun <T> rassocP(rassocOp: BinaryParser<T>, termP: Parser<T>, x: T): Parser<T> = buildParser {
@@ -78,6 +74,30 @@ private fun <T> rassocP(rassocOp: BinaryParser<T>, termP: Parser<T>, x: T): Pars
         rassocP1(rassocOp, termP, z).ev()
     }.ev()
     f(x, y)
+}
+
+private data class Pentuple <T> (
+    val rassoc: MutableList<BinaryParser<T>> = mutableListOf(),
+    val lassoc: MutableList<BinaryParser<T>> = mutableListOf(),
+    val nassoc: MutableList<BinaryParser<T>> = mutableListOf(),
+    val prefix: MutableList<UnaryParser<T>> = mutableListOf(),
+    val postfix: MutableList<UnaryParser<T>> = mutableListOf()
+)
+
+@Suppress("UNCHECKED_CAST")
+private fun <T> splitOp(op: Operator<T>, lists: Pentuple<T>): Pentuple<T> = lists.also { when (op) {
+    is Infix<*>   -> when (op.assoc) {
+        Assoc.None -> lists.nassoc.add(op.parser as BinaryParser<T>)
+        Assoc.Left -> lists.lassoc.add(op.parser as BinaryParser<T>)
+        Assoc.Right -> lists.rassoc.add(op.parser as BinaryParser<T>)
+    }
+    is Prefix<*>  -> lists.prefix.add(op.parser as UnaryParser<T>)
+    is Postfix<*> -> lists.postfix.add(op.parser as UnaryParser<T>)
+} }
+
+private fun <T> ambiguous(assoc: Assoc, parser: Parser<T>): Parser<Nothing> = buildParser {
+    parser.ev()
+    fail("ambiguous use of $assoc associative operator")
 }
 
 private fun <T> rassocP1(rassocOp: BinaryParser<T>, termP: Parser<T>, x: T): Parser<T>
@@ -92,31 +112,25 @@ private fun <T> lassocP(lassocOp: BinaryParser<T>, termP: Parser<T>, x: T): Pars
 private fun <T> lassocP1(lassocOp: BinaryParser<T>, termP: Parser<T>, x: T): Parser<T>
         = lassocP(lassocOp, termP, x) or just(x)
 
-private fun <T> ambiguous(assoc: Assoc, parser: Parser<T>): Parser<Nothing> = buildParser {
-    parser.ev()
-    fail("ambiguous use of $assoc associative operator")
-}
-
-private data class Pentuple <T> (
-    val rassoc: List<BinaryParser<T>> = listOf(),
-    val lassoc: List<BinaryParser<T>> = listOf(),
-    val nassoc: List<BinaryParser<T>> = listOf(),
-    val prefix: List<UnaryParser<T>> = listOf(),
-    val postfix: List<UnaryParser<T>> = listOf()
-)
-
-@Suppress("UNCHECKED_CAST")
-private fun <T> splitOp(op: Operator<T>, lists: Pentuple<T>): Pentuple<T> = when (op) {
-    is Infix<*>   -> when (op.assoc) {
-        Assoc.None -> lists.copy(nassoc = lists.nassoc.prepend(op.parser as BinaryParser<T>))
-        Assoc.Left -> lists.copy(lassoc = lists.lassoc.prepend(op.parser as BinaryParser<T>))
-        Assoc.Right -> lists.copy(rassoc = lists.rassoc.prepend(op.parser as BinaryParser<T>))
-    }
-    is Prefix<*>  -> lists.copy(prefix = lists.prefix.prepend(op.parser as UnaryParser<T>))
-    is Postfix<*> -> lists.copy(postfix = lists.postfix.prepend(op.parser as UnaryParser<T>))
-}
-
-// todo: must be prepend or can be append?
-private fun <T> List<T>.prepend(obj: T): List<T> = listOf(obj) + this
-
 private fun <T> id(a: T): T = a
+
+
+// idea from https://github.com/h0tk3y/better-parse
+class ParserReference <out T> internal constructor(provider: () -> Parser<T>) : Parser<T> {
+    private val parser by lazy(provider)
+    override fun invoke(input: String) = parser(input)
+}
+
+fun <T> ref(provider: () -> Parser<T>) = ParserReference(provider)
+
+
+private class WrappingBuilder <T> (
+    private val operators: OperatorTable<T>,
+    private val wrapper: (Parser<T>) -> Parser<T>,
+    private val natural: Parser<T>
+) : ParserBuilder<T> {
+    override fun build() = object {
+        val expr: Parser<T> = buildExpressionParser(operators, ref { term })
+        val term: Parser<T> = wrapper(expr) or natural
+    }.expr
+}
