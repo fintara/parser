@@ -68,8 +68,8 @@ val input = "ABCD1234"
 val result = parse(letter, input)
 
 when (result) {
-    is Error      -> println(result.message)
-    is Success<*> -> println(result.value)
+    is Error   -> println(result.message)
+    is Success -> println(result.value)
 }
 // should print 'A'
 ```
@@ -82,6 +82,16 @@ val result = run(int, input)
 // should be 42
 ```
 
+```kotlin
+val tail = oneOf('+', '-', '*', '/') andF number
+val tails = many1(tail).map { it.flatten() }
+val expr = number andF tails
+
+val result = run(expr, "12+6.5")
+// should be [12, '+', 6.5]
+```
+
+
 ## Parser builder
 In addition to the combinators `and`/`andL`/`andR`/`or`, as well as the modifier `map`, 
 there is a way to build parsers in declarative style.
@@ -90,23 +100,7 @@ there is a way to build parsers in declarative style.
 from one parser to the other upon calling `.ev()`, all while tracking the return value (`Success` or `Error`) of each one.
 In case of the latter, execution is stopped and the error is returned.
 
-## Examples
-### Arithmetic expressions
-This is how to build a parser for simple arithmetic expressions.
-
-An arithmetic expression is a number that is followed by one or more "tails" (operator followed by a number).
-```kotlin
-val tail = oneOf('+', '-', '*', '/') and number
-val tails = many1(tail).map { it.flatten() }
-val expr = number and tails
-
-val result = parse(expr, "12+6.5")
-// should be Success(value=[12, '+', 6.5], rest=)
-```
-
-### Parser builder
-An easy way to combine different parsers and their results.
-
+#### Example
 This parser would take two numbers and sum them together.
 ```kotlin
 val sum = buildParser {
@@ -119,6 +113,7 @@ val sum = buildParser {
 val result = parse(sum, "3+4")
 // should be Success(value=7, rest=)
 ```
+
 
 ## Expression parser builder
 There is a possibility to create a parser for an expression that also evaluates it.

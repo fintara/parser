@@ -80,5 +80,99 @@ class ExpressionParserTest {
             assertSuccess(exprP, input, expected)
         }
     }
+
+    @Test
+    fun `boolean expression`() {
+        val trueP: Parser<Boolean> = oneOf('t', 'T', '1').map { true }
+        val falseP: Parser<Boolean> = oneOf('f', 'F', '0').map { false }
+        val termP: Parser<Boolean> = between(skipSpaces, skipSpaces, trueP or falseP)
+
+        val table: OperatorTable<Boolean> = listOf(
+            listOf( prefix("!") { !it } ),
+            listOf( binary("&&") { x, y -> x && y } ),
+            listOf( binary("||") { x, y -> x || y } )
+        )
+
+        val exprP = buildExpressionParser(table, termP, parens = true)
+
+        // helpers
+        fun applyValues(formula: String, map: Map<Char, Boolean>) = map.toList().fold(formula) { acc, (from, to) ->
+            acc.replace(from, if (to) 'T' else 'F')
+        }
+
+        fun withExpr(formula: String, map: Map<List<Boolean>, Boolean>): Map<String, Boolean>
+                = map.mapKeys { (bs, _) -> applyValues(formula, ('a'..'z').zip(bs).toMap()) }
+
+        fun Map<String, Boolean>.testAll() = forEach { input, expected -> assertSuccess(exprP, input, expected) }
+
+        // test cases
+        withExpr("a && b", mapOf(
+                listOf(false, false) to false,
+                listOf(false, true) to false,
+                listOf(true, false) to false,
+                listOf(true, true) to true
+        )).testAll()
+
+        withExpr("a || b", mapOf(
+                listOf(false, false) to false,
+                listOf(false, true) to true,
+                listOf(true, false) to true,
+                listOf(true, true) to true
+        )).testAll()
+
+        withExpr("a && !b", mapOf(
+                listOf(false, false) to false,
+                listOf(false, true) to false,
+                listOf(true, false) to true,
+                listOf(true, true) to false
+        )).testAll()
+
+        withExpr("!(!a || !b)", mapOf(
+                listOf(false, false) to false,
+                listOf(false, true) to false,
+                listOf(true, false) to false,
+                listOf(true, true) to true
+        )).testAll()
+
+        // simplifies to a || b
+        withExpr("!a && (a || b) || (b || a && a) && (a || !b)", mapOf(
+                listOf(false, false) to false,
+                listOf(false, true) to true,
+                listOf(true, false) to true,
+                listOf(true, true) to true
+        )).testAll()
+
+        // simplifies to True
+        withExpr("a || !(b && a)", mapOf(
+                listOf(false, false) to true,
+                listOf(false, true) to true,
+                listOf(true, false) to true,
+                listOf(true, true) to true
+        )).testAll()
+
+        // simplifies to !a
+        withExpr("!(a && b) && (!a || b) && (!b || b)", mapOf(
+                listOf(false, false) to true,
+                listOf(false, true) to true,
+                listOf(true, false) to false,
+                listOf(true, true) to false
+        )).testAll()
+
+        withExpr("a || b || c", mapOf(
+                listOf(false, false, false) to false,
+                listOf(false, false, true) to true,
+                listOf(false, true, false) to true,
+                listOf(false, true, true) to true,
+                listOf(true, false, false) to true,
+                listOf(true, false, true) to true,
+                listOf(true, true, false) to true,
+                listOf(true, true, true) to true
+        )).testAll()
+    }
+
+    private fun <T> binary(symbol: String, f: (T, T) -> T)
+            = Infix(between(skipSpaces, skipSpaces, string(symbol)).flatMap { just(f) }, Assoc.Left)
+    private fun <T> prefix(symbol: String, f: (T) -> T)
+            = Prefix(between(skipSpaces, skipSpaces, string(symbol)).flatMap { just(f) })
 }
 
