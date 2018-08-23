@@ -130,15 +130,12 @@ infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this andF 
 infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep)
 infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep)
 
-private fun <T> manyAccum(parser: Parser<T>, list: MutableList<T>): Parser<List<T>> {
+private fun <T> manyAccum(parser: Parser<T>, list: List<T>): Parser<List<T>> {
     return parser
-            .flatMap {
-                list.add(it)
-                manyAccum(parser, list)
-            }
+            .flatMap { manyAccum(parser, list + it) }
             .recoverWith { just(list) }
 }
-fun <T> many(parser: Parser<T>): Parser<List<T>> = manyAccum(parser, mutableListOf())
+fun <T> many(parser: Parser<T>): Parser<List<T>> = manyAccum(parser, emptyList())
 fun manyString(parser: Parser<Char>): Parser<String> = many(parser).map { it.joinToString("") }
 
 fun <T> many1(parser: Parser<T>): Parser<List<T>> = parser.flatMap { x -> many(parser).flatMap { xs -> just(listOf(x) + xs) } }
