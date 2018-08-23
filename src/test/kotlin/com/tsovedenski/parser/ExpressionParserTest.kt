@@ -1,16 +1,17 @@
 package com.tsovedenski.parser
 
-import org.junit.Test
+import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.describe
+import org.jetbrains.spek.api.dsl.it
 import java.lang.Math.pow
 import kotlin.math.roundToInt
 
 /**
  * Created by Tsvetan Ovedenski on 20/08/2018.
  */
-class ExpressionParserTest {
+object ExpressionParserTest : Spek({
 
-    @Test
-    fun `proper arithmetic`() {
+    describe("proper arithmetic") {
         val table: OperatorTable<Number> = listOf(
                 listOf(
                         prefix("-") { x -> -x.toDouble() }
@@ -45,12 +46,13 @@ class ExpressionParserTest {
         )
 
         cases.forEach { input, expected ->
-            assertSuccess(exprP, input, expected)
+            it("solves $input = $expected") {
+                assertSuccess(exprP, input, expected)
+            }
         }
     }
 
-    @Test
-    fun `simple arithmetic`() {
+    describe("simple arithmetic") {
         val table: OperatorTable<Int> = listOf(
                 listOf(
                         prefix("-") { -it },
@@ -77,12 +79,18 @@ class ExpressionParserTest {
         )
 
         cases.forEach { input, expected ->
-            assertSuccess(exprP, input, expected)
+            it("solves $input = $expected") {
+                assertSuccess(exprP, input, expected)
+            }
         }
     }
 
-    @Test
-    fun `boolean expression`() {
+    describe("boolean expression") {
+        fun <T> binary(symbol: String, f: (T, T) -> T)
+                = Infix(between(skipSpaces, skipSpaces, string(symbol)).flatMap { just(f) }, Assoc.Left)
+        fun <T> prefix(symbol: String, f: (T) -> T)
+                = Prefix(between(skipSpaces, skipSpaces, string(symbol)).flatMap { just(f) })
+
         val trueP: Parser<Boolean> = oneOf('t', 'T', '1').map { true }
         val falseP: Parser<Boolean> = oneOf('f', 'F', '0').map { false }
         val termP: Parser<Boolean> = between(skipSpaces, skipSpaces, trueP or falseP)
@@ -103,7 +111,11 @@ class ExpressionParserTest {
         fun withExpr(formula: String, map: Map<List<Boolean>, Boolean>): Map<String, Boolean>
                 = map.mapKeys { (bs, _) -> applyValues(formula, ('a'..'z').zip(bs).toMap()) }
 
-        fun Map<String, Boolean>.testAll() = forEach { input, expected -> assertSuccess(exprP, input, expected) }
+        fun Map<String, Boolean>.testAll() = forEach { input, expected ->
+            it("evals $input == $expected") {
+                assertSuccess(exprP, input, expected)
+            }
+        }
 
         // test cases
         withExpr("a && b", mapOf(
@@ -169,10 +181,4 @@ class ExpressionParserTest {
                 listOf(true, true, true) to true
         )).testAll()
     }
-
-    private fun <T> binary(symbol: String, f: (T, T) -> T)
-            = Infix(between(skipSpaces, skipSpaces, string(symbol)).flatMap { just(f) }, Assoc.Left)
-    private fun <T> prefix(symbol: String, f: (T) -> T)
-            = Prefix(between(skipSpaces, skipSpaces, string(symbol)).flatMap { just(f) })
-}
-
+})

@@ -5,7 +5,7 @@ import org.junit.Assert
 /**
  * Created by Tsvetan Ovedenski on 06/01/2018.
  */
-fun <T> assertSuccess(parser: Parser<T>, input: String, expected: T, expectedRest: String = "") {
+internal fun <T> assertSuccess(parser: Parser<T>, input: String, expected: T, expectedRest: String = "") {
     val result = parse(parser, input)
     Assert.assertTrue("$input: Success", result is Success)
 
@@ -14,7 +14,7 @@ fun <T> assertSuccess(parser: Parser<T>, input: String, expected: T, expectedRes
     Assert.assertEquals("$input: Rest", expectedRest, result.rest)
 }
 
-fun <T> assertError(parser: Parser<T>, input: String) {
+internal fun <T> assertError(parser: Parser<T>, input: String) {
     val result = parse(parser, input)
     Assert.assertTrue("$input: Error", result is Error)
 }

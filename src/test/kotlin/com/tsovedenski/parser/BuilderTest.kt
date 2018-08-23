@@ -1,14 +1,15 @@
 package com.tsovedenski.parser
 
-import org.junit.Test
+import org.jetbrains.spek.api.Spek
+import org.jetbrains.spek.api.dsl.describe
+import org.jetbrains.spek.api.dsl.it
 
 /**
  * Created by Tsvetan Ovedenski on 08/01/18.
  */
-class BuilderTest {
+object BuilderTest : Spek({
 
-    @Test
-    fun `summing parser`() {
+    describe("summing parser") {
         val sum: Parser<Double> = buildParser {
             val a = number.ev().toDouble()
             char('+').ev()
@@ -16,11 +17,17 @@ class BuilderTest {
             a + b
         }
 
-        assertSuccess(sum, "-3.5+4", 0.5)
+        mapOf(
+                "-3.5+4" to 0.5,
+                "10+20" to 30.0
+        ).forEach { input, expected ->
+            it("sum '$input'") {
+                assertSuccess(sum, input, expected)
+            }
+        }
     }
 
-    @Test
-    fun `failing parser`() {
+    describe("failing parser") {
         val sum: Parser<Int> = buildParser {
             val a = int.ev()
             char('+').ev()
@@ -33,8 +40,12 @@ class BuilderTest {
             a + b
         }
 
-        assertSuccess(sum, "5+7", 12)
-        assertError(sum, "5+6")
-    }
+        it("should not fail when b != 6") {
+            assertSuccess(sum, "5+7", 12)
+        }
 
-}
+        it("should fail when b = 6") {
+            assertError(sum, "5+6")
+        }
+    }
+})
