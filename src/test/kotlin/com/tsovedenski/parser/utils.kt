@@ -18,3 +18,8 @@ internal fun <T> assertError(parser: Parser<T>, input: String) {
     val result = parse(parser, input)
     Assert.assertTrue("$input: Error", result is Error)
 }
+
+internal fun <T> assertState(parser: Parser<T>, input: String, expectedState: ParserState) {
+    val result = parse(parser, input)
+    Assert.assertEquals(expectedState, result.state)
+}

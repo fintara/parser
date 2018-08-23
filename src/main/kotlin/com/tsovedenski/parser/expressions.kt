@@ -118,7 +118,7 @@ private fun <T> id(a: T): T = a
 // idea from https://github.com/h0tk3y/better-parse
 class ParserReference <out T> internal constructor(provider: () -> Parser<T>) : Parser<T> {
     private val parser by lazy(provider)
-    override fun invoke(input: String) = parser(input)
+    override fun invoke(input: String, state: ParserState) = parser(input, state)
 }
 
 fun <T> ref(provider: () -> Parser<T>) = ParserReference(provider)

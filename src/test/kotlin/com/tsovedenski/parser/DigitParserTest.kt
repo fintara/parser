@@ -28,5 +28,28 @@ object DigitParserTest : Spek({
                 }
             }
         }
+
+        describe("proper state") {
+            it("fails at position 0") {
+                val p = digit
+                val i = "ABC"
+                assertError(p, i)
+                assertState(p, i, ParserState(0))
+            }
+
+            it("fails at position 1") {
+                val p = letter andR digit
+                val i = "ABC"
+                assertError(p, i)
+                assertState(p, i, ParserState(1))
+            }
+
+            it("fails at position 5") {
+                val p = string("test") andR digit
+                val i = "testABC"
+                assertError(p, i)
+                assertState(p, i, ParserState(4))
+            }
+        }
     }
 })

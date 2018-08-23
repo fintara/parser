@@ -5,12 +5,16 @@ package com.tsovedenski.parser
 /**
  * Created by Tsvetan Ovedenski on 06/01/2018.
  */
-sealed class Result <out T>
-data class Success <out T> (val value: T, val rest: String) : Result<T>()
-data class Error (val message: String) : Result<Nothing>()
-typealias Parser <T> = (String) -> Result<T>
+sealed class Result <out T> (open val state: ParserState)
+data class Success <out T> (val value: T, val rest: String, override val state: ParserState) : Result<T>(state)
+data class Error (val message: String, override val state: ParserState) : Result<Nothing>(state)
+typealias Parser <T> = (String, ParserState) -> Result<T>
 
-fun <T> parse(parser: Parser<T>, input: String): Result<T> = parser(input)
+data class ParserState(val position: Int) {
+    fun nextPos() = copy(position = position + 1)
+}
+
+fun <T> parse(parser: Parser<T>, input: String): Result<T> = parser(input, ParserState(0))
 fun <T> run(parser: Parser<T>, input: String): T? {
     val result = parse(parser, input)
     return when (result) {
@@ -42,12 +46,12 @@ fun <A, B> Parser<A>.flatMap(action: (A) -> Parser<B>): Parser<B> = flatMap(acti
 private inline fun <A, B> Parser<A>.flatMap(
         crossinline success: (A) -> Parser<B>,
         crossinline error: (Error) -> Parser<B>
-): Parser<B> = { input ->
-    val result = this(input)
+): Parser<B> = { input, state ->
+    val result = this(input, state)
 
     when (result) {
-        is Error      -> error(result)(input)
-        is Success<A> -> success(result.value)(result.rest)
+        is Error      -> error(result)(input, state)
+        is Success<A> -> success(result.value)(result.rest, result.state)
     }
 }
 

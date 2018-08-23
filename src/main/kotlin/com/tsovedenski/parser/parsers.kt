@@ -7,19 +7,19 @@ import kotlin.math.pow
 /**
  * Created by Tsvetan Ovedenski on 06/01/2018.
  */
-val any: Parser<Char> = { input ->
+val any: Parser<Char> = { input, state ->
     when (input.isEmpty()) {
-        true -> Error("end of input")
-        else -> Success(input.first(), input.substring(1))
+        true -> Error("end of input", state)
+        else -> Success(input.first(), input.substring(1), state.nextPos())
     }
 }
 
-fun <T> just(value: T): Parser<T> = { input ->
-    Success(value, input)
+fun <T> just(value: T): Parser<T> = { input, state ->
+    Success(value, input, state)
 }
 
-fun fail(message: String): Parser<Nothing> = { _ ->
-    Error(message)
+fun fail(message: String): Parser<Nothing> = { _, state ->
+    Error(message, state)
 }
 
 fun satisfy(predicate: (Char) -> Boolean): Parser<Char> {
@@ -94,11 +94,11 @@ val float: Parser<Double> = buildParser {
 val unumber = (ufloat or uint) as Parser<Number> % "positive real number"
 val number = (float or int) as Parser<Number> % "real number"
 
-val eof: Parser<Unit> = { input ->
-    val result = any(input)
+val eof: Parser<Unit> = { input, state ->
+    val result = any(input, state)
     when (result) {
-        is Error   -> Success(Unit, "")
-        is Success -> Error("end of input")
+        is Error   -> Success(Unit, "", state)
+        is Success -> Error("end of input", state)
     }
 }
 
@@ -164,11 +164,11 @@ fun <T> parens(parser: Parser<T>): Parser<T> = between(char('('), char(')'), par
 
 fun <T> ignoreSpacesAround(parser: Parser<T>): Parser<T> = between(skipSpaces, skipSpaces, parser)
 
-fun <T> lookahead(parser: Parser<T>): Parser<T> = { input ->
-    val result = parser(input)
+fun <T> lookahead(parser: Parser<T>): Parser<T> = { input, state ->
+    val result = parser(input, state)
 
     when (result) {
         is Error   -> result
-        is Success -> result.copy(rest = input)
+        is Success -> result.copy(rest = input, state = state)
     }
 }
