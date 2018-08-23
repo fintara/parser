@@ -162,6 +162,8 @@ fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parse
 
 fun <T> parens(parser: Parser<T>): Parser<T> = between(char('('), char(')'), parser)
 
+fun <T> ignoreSpacesAround(parser: Parser<T>): Parser<T> = between(skipSpaces, skipSpaces, parser)
+
 fun <T> lookahead(parser: Parser<T>): Parser<T> = { input ->
     val result = parser(input)
 
