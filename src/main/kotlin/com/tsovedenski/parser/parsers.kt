@@ -9,7 +9,7 @@ import kotlin.math.pow
  */
 val any: Parser<Char> = { input ->
     when (input.isEmpty()) {
-        true -> Error("end of input")
+        true -> Error("any")
         else -> Success(input.first(), input.substring(1))
     }
 }
@@ -18,8 +18,8 @@ fun <T> just(value: T): Parser<T> = { input ->
     Success(value, input)
 }
 
-fun fail(message: String): Parser<Nothing> = { _ ->
-    Error(message)
+fun fail(message: String, previous: Error? = null): Parser<Nothing> = { _ ->
+    Error(message, previous)
 }
 
 fun satisfy(predicate: (Char) -> Boolean): Parser<Char> {
@@ -27,9 +27,9 @@ fun satisfy(predicate: (Char) -> Boolean): Parser<Char> {
         if (predicate(it)) {
             just(it)
         } else {
-            fail("satisfy")
+            fail("satisfy($it) false")
         }
-    }
+    } % "satisfy"
 }
 
 fun <T> option(default: T, parser: Parser<T>) = parser or just(default)
@@ -43,12 +43,12 @@ fun char(wanted: Char) = satisfy { it == wanted } % "'$wanted'"
 val space     = satisfy(Char::isWhitespace) % "space"
 val upper     = satisfy(Char::isUpperCase) % "upper"
 val lower     = satisfy(Char::isLowerCase) % "lower"
-val alphaNum  = satisfy(Char::isLetterOrDigit) % "alpha-numeric"
+val alphaNum  = satisfy(Char::isLetterOrDigit) % "alphaNum"
 val letter    = satisfy(Char::isLetter) % "letter"
 val digit     = satisfy(Char::isDigit) % "digit"
 
-val uint: Parser<Int> = many1(digit).map { it.joinToString("").toInt() }
-val ulong: Parser<Long> = many1(digit).map { it.joinToString("").toLong() }
+val uint: Parser<Int> = many1(digit).map { it.joinToString("").toInt() } % "uint"
+val ulong: Parser<Long> = many1(digit).map { it.joinToString("").toLong() } % "ulong"
 
 val int: Parser<Int> = buildParser {
     val sign = option('x', char('-')).ev()
@@ -57,7 +57,7 @@ val int: Parser<Int> = buildParser {
         '-'  -> -number
         else -> number
     }
-}
+} % "int"
 val long: Parser<Long> = buildParser {
     val sign = option('x', char('-')).ev()
     val number = ulong.ev()
@@ -65,23 +65,23 @@ val long: Parser<Long> = buildParser {
         '-'  -> -number
         else -> number
     }
-}
+} % "long"
 
 private val floatP: Parser<Double> = buildParser {
     val base = int.ev()
     char('.').ev()
     val frac = ulong.ev()
     "$base.$frac".toDouble()
-}
+} % "floatP"
 
 private val floatE: Parser<Double> = buildParser {
     val base = floatP.ev()
     oneOf('e', 'E').ev()
     val exp  = int.ev()
     base * (10.0).pow(exp)
-}
+} % "floatE"
 
-val ufloat: Parser<Double> = (floatE or floatP) % "floating number"
+val ufloat: Parser<Double> = (floatE or floatP) % "ufloat"
 val float: Parser<Double> = buildParser {
     val sign = option('x', char('-')).ev()
     val number = ufloat.ev()
@@ -89,30 +89,30 @@ val float: Parser<Double> = buildParser {
         '-'  -> -number
         else -> number
     }
-}
+} % "float"
 
-val unumber = (ufloat or uint) as Parser<Number> % "positive real number"
-val number = (float or int) as Parser<Number> % "real number"
+val unumber = (ufloat or uint) as Parser<Number> % "unumber"
+val number = (float or int) as Parser<Number> % "number"
 
 val eof: Parser<Unit> = { input ->
     val result = any(input)
     when (result) {
         is Error   -> Success(Unit, "")
-        is Success -> Error("end of input")
+        is Success -> Error("eof")
     }
 }
 
 fun oneOf(vararg possible: Char) = oneOf(possible.toList())
-fun oneOf(possible: List<Char>) = satisfy { it in possible } % "one of $possible"
+fun oneOf(possible: List<Char>) = satisfy { it in possible } % "oneOf($possible)"
 fun noneOf(vararg possible: Char) = noneOf(possible.toList())
-fun noneOf(possible: List<Char>) = satisfy { it !in possible } % "none of $possible"
+fun noneOf(possible: List<Char>) = satisfy { it !in possible } % "noneOf($possible)"
 
 fun string(wanted: String): Parser<String> {
     val parser = count(wanted.length, any).map { it.joinToString("") }
     return parser.flatMap { word ->
         when (word) {
             wanted -> just(word)
-            else   -> fail("Could not match '$wanted'")
+            else   -> fail("string($wanted)")
         }
     }
 }
@@ -125,7 +125,7 @@ fun <T> count(number: Int, parser: Parser<T>): Parser<List<T>> {
 }
 
 infix fun <T, S> Parser<T>.sepBy(sep: Parser<S>): Parser<List<T>> = (this sepBy1 sep) or just(listOf())
-infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this andF many(sep andR this)) as Parser<List<T>>
+infix fun <T, S> Parser<T>.sepBy1(sep: Parser<S>): Parser<List<T>> = (this andF many(sep andR this)) as Parser<List<T>> % "sepBy1"
 
 infix fun <T, S> Parser<T>.endBy(sep: Parser<S>): Parser<List<T>> = many(this andL sep)
 infix fun <T, S> Parser<T>.endBy1(sep: Parser<S>): Parser<List<T>> = many1(this andL sep)
@@ -158,17 +158,17 @@ fun <T> choice(parsers: List<Parser<T>>): Parser<T> {
 }
 
 fun <O,T,C> between(open: Parser<O>, close: Parser<C>, parser: Parser<T>): Parser<T>
-        = (open andR parser andL close)
+        = (open andR parser andL close) % "between"
 
-fun <T> parens(parser: Parser<T>): Parser<T> = between(char('('), char(')'), parser)
+fun <T> parens(parser: Parser<T>): Parser<T> = between(char('('), char(')'), parser) % "parens"
 
 fun <T> ignoreSpacesAround(parser: Parser<T>): Parser<T> = between(skipSpaces, skipSpaces, parser)
 
-fun <T> lookahead(parser: Parser<T>): Parser<T> = { input ->
+fun <T> lookahead(parser: Parser<T>): Parser<T> = { input: String ->
     val result = parser(input)
 
     when (result) {
         is Error   -> result
         is Success -> result.copy(rest = input)
     }
-}
+} % "lookahead"

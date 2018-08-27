@@ -48,7 +48,7 @@ object BuilderTest : Spek({
             val b = uint.ev()
 
             if (b == 6) {
-                fail()
+                fail("b == 6")
             }
 
             a + b

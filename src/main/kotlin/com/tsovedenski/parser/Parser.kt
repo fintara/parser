@@ -7,7 +7,17 @@ package com.tsovedenski.parser
  */
 sealed class Result <out T>
 data class Success <out T> (val value: T, val rest: String) : Result<T>()
-data class Error (val message: String) : Result<Nothing>()
+data class Error (val label: String, val previous: Error? = null) : Result<Nothing>() {
+    val trace
+        get() = fold(mutableListOf<String>()) { acc, err ->
+            acc.apply { add(err.label) }
+        }.joinToString(" -> ")
+
+    fun <R> fold(initial: R, f: (R, Error) -> R): R {
+        val acc = f(initial, this)
+        return previous?.fold(acc, f) ?: acc
+    }
+}
 typealias Parser <T> = (String) -> Result<T>
 
 fun <T> parse(parser: Parser<T>, input: String): Result<T> = parser(input)
@@ -23,7 +33,7 @@ interface ParserBuilder <out T> {
     fun build(): Parser<T>
 }
 
-operator fun <T> Parser<T>.rem(message: String): Parser<T> = recoverWith { fail(message) }
+operator fun <T> Parser<T>.rem(label: String): Parser<T> = recoverWith { fail(label, it) }
 
 infix fun <A, B> Parser<A>.and(other: Parser<B>): Parser<Pair<A, B>> = flatMap { a -> other.map { b -> Pair(a, b) } }
 
@@ -37,7 +47,7 @@ infix fun <T> Parser<T>.or(other: Parser<T>): Parser<T> = recoverWith { other }
 
 fun <A, B> Parser<A>.map(action: (A) -> B): Parser<B> = flatMap { just(action(it)) }
 
-fun <A, B> Parser<A>.flatMap(action: (A) -> Parser<B>): Parser<B> = flatMap(action) { e -> fail(e.message) }
+fun <A, B> Parser<A>.flatMap(action: (A) -> Parser<B>): Parser<B> = flatMap(action) { e -> fail(e.label, e.previous) }
 
 private inline fun <A, B> Parser<A>.flatMap(
         crossinline success: (A) -> Parser<B>,

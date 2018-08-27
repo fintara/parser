@@ -97,16 +97,26 @@ object OtherParserTest : Spek({
         }
     }
 
-    describe("error message") {
-        val errorMsg = "custom error message"
-        val parser = digit % errorMsg
+    describe("error label") {
+        it("has new error label") {
+            val errorMsg = "custom error label"
+            val parser = digit % errorMsg
+            val result = parse(parser, "")
 
-        val result = parse(parser, "")
-        it("has new error message") {
             Assert.assertTrue(result is Error)
 
             result as Error
-            Assert.assertEquals(errorMsg, result.message)
+            Assert.assertEquals(errorMsg, result.label)
+        }
+
+        it("has previous errors") {
+            val parser = number
+            val result = parse(parser, "A")
+
+            Assert.assertTrue(result is Error)
+
+            result as Error
+            Assert.assertNotNull(result.previous)
         }
     }
 
