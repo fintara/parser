@@ -1,33 +1,47 @@
 package com.tsovedenski.parser
 
+import kotlin.coroutines.experimental.*
+
 /**
  * Created by Tsvetan Ovedenski on 07/01/18.
  */
-fun <T> buildParser(block: ParserContext.() -> T): Parser<T> = { input ->
-    try {
-        val context = ParserContext(input)
-        Success(block(context), context.getRest())
-    } catch (e: ParserException) {
-        e.error
-    }
-}
+fun <T> buildParser(block: suspend ParserContext.() -> T): Parser<T> = { input ->
+    lateinit var result: Result<T>
 
-class ParserContext(input: String) {
+    val context = ParserContext(input)
 
-    private var rest = input
+    val completion = object : Continuation<T> {
+        override val context = EmptyCoroutineContext
 
-    fun getRest() = rest
+        override fun resume(value: T) {
+            result = Success(value, context.rest)
+        }
 
-    fun <A> Parser<A>.ev(): A {
-        val result = this(rest)
-        when (result) {
-            is Error      -> throw handleError(result)
-            is Success<A> -> return handleSuccess(result)
+        override fun resumeWithException(exception: Throwable) = when (exception) {
+            is ParserException -> result = exception.error
+            else               -> throw exception
         }
     }
 
-    fun fail(message: String = "Fail"): Nothing {
-        throw handleError(Error(message))
+    block.startCoroutine(context, completion)
+
+    result
+}
+
+class ParserContext(input: String) {
+    var rest = input
+        private set
+
+    suspend fun <A> Parser<A>.ev(): A = suspendCoroutine { c ->
+        val result = this(rest)
+        when (result) {
+            is Error   -> c.resumeWithException(handleError(result))
+            is Success -> c.resume(handleSuccess(result))
+        }
+    }
+
+    suspend fun fail(message: String = "Fail"): Nothing = suspendCoroutine { c ->
+        c.resumeWithException(handleError(Error(message)))
     }
 
     private fun <A> handleSuccess(success: Success<A>): A {

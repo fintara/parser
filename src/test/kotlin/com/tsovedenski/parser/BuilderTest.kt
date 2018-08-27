@@ -9,6 +9,20 @@ import org.jetbrains.spek.api.dsl.it
  */
 object BuilderTest : Spek({
 
+    describe("constant parser") {
+        val p = buildParser { 1 }
+
+        listOf(
+            "",
+            "a",
+            "234ABC"
+        ).forEach {
+            it("parses '$it' as 1") {
+                assertSuccess(p, it, 1, it)
+            }
+        }
+    }
+
     describe("summing parser") {
         val sum: Parser<Double> = buildParser {
             val a = number.ev().toDouble()
@@ -21,7 +35,7 @@ object BuilderTest : Spek({
                 "-3.5+4" to 0.5,
                 "10+20" to 30.0
         ).forEach { input, expected ->
-            it("sum '$input'") {
+            it("sum '$input' = $expected") {
                 assertSuccess(sum, input, expected)
             }
         }
