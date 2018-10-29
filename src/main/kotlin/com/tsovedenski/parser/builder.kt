@@ -1,6 +1,8 @@
 package com.tsovedenski.parser
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Created by Tsvetan Ovedenski on 07/01/18.
@@ -13,13 +15,19 @@ fun <T> buildParser(block: suspend ParserContext.() -> T): Parser<T> = { input -
     val completion = object : Continuation<T> {
         override val context = EmptyCoroutineContext
 
-        override fun resume(value: T) {
+        override fun resumeWith(result: kotlin.Result<T>) = when {
+            result.isSuccess -> resume(result.getOrThrow())
+            else             -> resumeWithException(result.exceptionOrNull())
+        }
+
+        private fun resume(value: T) {
             result = Success(value, context.rest)
         }
 
-        override fun resumeWithException(exception: Throwable) = when (exception) {
+        private fun resumeWithException(exception: Throwable?) = when (exception) {
             is ParserException -> result = exception.error
-            else               -> throw exception
+            is Exception       -> throw exception
+            else               -> Unit
         }
     }
 
