@@ -80,7 +80,7 @@ object OtherParserTest : Spek({
         }
     }
 
-    describe("chain") {
+    describe("List.chain") {
         it("succeeds with empty list") {
             val parsers = listOf<Parser<*>>()
             assertSuccess(parsers.chain(), "abcd", listOf(), "abcd")
@@ -94,6 +94,20 @@ object OtherParserTest : Spek({
         it("succeeds with parsers") {
             val parsers = listOf(digit, lower, upper, lower, char('+'))
             assertSuccess(parsers.chain(), "1aBc+XYZ", "1aBc+".toList(), "XYZ")
+        }
+    }
+
+    describe("Pair.chain") {
+        it("succeeds") {
+            val parser = Pair(char('z'), uint)
+            assertSuccess(parser.chain(), "z1abc", Pair('z', 1), "abc")
+        }
+    }
+
+    describe("Triple.chain") {
+        it("succeeds") {
+            val parser = Triple(uint, char('+'), many1(digit))
+            assertSuccess(parser.chain(), "1+234abc", Triple(1, '+', "234".toList()), "abc")
         }
     }
 

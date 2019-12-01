@@ -68,6 +68,23 @@ fun <T> List<Parser<T>>.chain(): Parser<List<T>> {
     }
 }
 
+fun <A, B> Pair<Parser<A>, Parser<B>>.chain(): Parser<Pair<A, B>> {
+    return first.flatMap { x ->
+        second.map { y ->
+            Pair(x, y)
+        }
+    }
+}
+
+fun <A, B, C> Triple<Parser<A>, Parser<B>, Parser<C>>.chain(): Parser<Triple<A, B, C>> {
+    return buildParser {
+        val x = first.ev()
+        val y = second.ev()
+        val z = third.ev()
+        Triple(x, y, z)
+    }
+}
+
 private fun <T> flatten(fst: T, snd: T): List<T> {
     val list = when {
         fst is List<*> && snd is List<*> -> fst + snd

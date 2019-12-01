@@ -29,6 +29,7 @@ An attempt to implement parser combinators in Kotlin, inspired by Parsec.
 * `satisfy(pred)` - character for which provided predicate returns true
 
 ### Combinators
+* `List/Pair/Triple(parsers).chain()` - inverts the structure and returns a parser of `List/Pair/Triple` with chained results 
 * `count(number, parser)` - repeats `parser` as many times as stated
 * `choice(list)` - tries list of parsers in order, returning the first success
 * `chain(parsers)` - executes a list of parsers and returns a list of their results
